@@ -1149,14 +1149,74 @@ internal class CSkin : IDisposable
                 public CFlyingNotes FlyingNotes { get; set; } = new();
                 public class CFlyingNotes
                 {
-                    // super-flying-notes AioiLight
+                    /// <summary>
+                    /// ノーツの開始点X座標（プレイヤーごと）
+                    /// </summary>
                     public int[] StartPointX { get; set; } = new int[] { 414, 414 };
+
+                    /// <summary>
+                    /// ノーツの開始点Y座標（プレイヤーごと）
+                    /// </summary>
                     public int[] StartPointY { get; set; } = new int[] { 260, 434 };
+
+                    /// <summary>
+                    /// ノーツの終了点X座標（プレイヤーごと）
+                    /// </summary>
                     public int[] EndPointX { get; set; } = new int[] { 1225, 1225 };
+
+                    /// <summary>
+                    /// ノーツの終了点Y座標（プレイヤーごと）
+                    /// </summary>
                     public int[] EndPointY { get; set; } = new int[] { 164, 554 };
+
+                    /// <summary>
+                    /// 円弧の振幅（従来モード）
+                    /// </summary>
                     public int Sine { get; set; } = 220;
+
+                    /// <summary>
+                    /// イージ���グ処理を使用するかどうか（従来モード）
+                    /// </summary>
                     public bool IsUsingEasing { get; set; } = true;
+
+                    /// <summary>
+                    /// ノーツ移動のタイマー値（従来モード）
+                    /// </summary>
                     public int Timer { get; set; } = 3;
+
+                    /// <summary>
+                    /// フレームベースの座標指定を使用するかどうか
+                    /// </summary>
+                    public bool UseFrameBasedPosition { get; set; } = false;
+                    
+                    /// <summary>
+                    /// フレームベースモードでのタイマー値（60フレーム分のデータを使用するので調整が必要）
+                    /// </summary>
+                    public int FrameTimer { get; set; } = 1;
+
+                    /// <summary>
+                    /// 60フレーム分のX座標データ（プレイヤーごと）
+                    /// FramePositionsX[プレイヤー番号][フレーム番号] = X座標
+                    /// </summary>
+                    public float[][] FramePositionsX { get; set; } = new float[][]
+                    {
+                        // プレイヤー0用（60フレーム分のX座標）
+                        new float[60] { },
+                        // プレイヤー1用（60フレーム分のX座標）
+                        new float[60] { }
+                    };
+
+                    /// <summary>
+                    /// 60フレーム分のY座標データ（プレイヤーごと）
+                    /// FramePositionsY[プレイヤー番号][フレーム番号] = Y座標
+                    /// </summary>
+                    public float[][] FramePositionsY { get; set; } = new float[][]
+                    {
+                        // プレイヤー0用（60フレーム分のY座標）
+                        new float[60] { },
+                        // プレイヤー1用（60フレーム分のY座標）
+                        new float[60] { }
+                    };
                 }
                 public CFire Fire { get; set; } = new();
                 public class CFire
