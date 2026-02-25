@@ -13,12 +13,18 @@ namespace TJAPlayerPI
     /// </summary>
     internal class FlyingNotes : CActivity
     {
+        // プロパティ (他のクラスから参照されるため、パブリックで定義)
+        public float[] StartPointX = new float[2];
+        public float[] StartPointY = new float[2];
+        public float[] EndPointX = new float[2];
+        public float[] EndPointY = new float[2];
+
         // コンストラクタ
         public FlyingNotes(CActChipEffects chipEffects, FireWorks fireWorks)
         {
             this.actChipEffects = chipEffects;
             this.FireWorks = fireWorks;
-            base.b活性化してない = true;
+            // base.b活性化してない = true; // Error CS0200: 読み取り専用のため削除
         }
 
         // メソッド
@@ -54,10 +60,10 @@ namespace TJAPlayerPI
                     Flying[i].Counter.n現在の値 = 0;
                     
                     // スキンの基本座標を保持（配列外参照時のフォールバック用）
-                    Flying[i].StartPointX = TJAPlayerPI.app.Skin.SkinConfig.Game.Effect.FlyingNotes.StartPointX[nPlayer];
-                    Flying[i].StartPointY = TJAPlayerPI.app.Skin.SkinConfig.Game.Effect.FlyingNotes.StartPointY[nPlayer];
-                    Flying[i].EndPointX = TJAPlayerPI.app.Skin.SkinConfig.Game.Effect.FlyingNotes.EndPointX[nPlayer];
-                    Flying[i].EndPointY = TJAPlayerPI.app.Skin.SkinConfig.Game.Effect.FlyingNotes.EndPointY[nPlayer];
+                    Flying[i].StartPointX = this.StartPointX[nPlayer];
+                    Flying[i].StartPointY = this.StartPointY[nPlayer];
+                    Flying[i].EndPointX = this.EndPointX[nPlayer];
+                    Flying[i].EndPointY = this.EndPointY[nPlayer];
 
                     break;
                 }
@@ -74,6 +80,17 @@ namespace TJAPlayerPI
                 Flying[i].IsUsing = false;
                 Flying[i].Counter = new CCounter();
             }
+
+            // スキン設定から座標を読み込み、クラスのフィールドにキャッシュする
+            // これにより CAct演奏Drumsレーン太鼓.cs 等からの参照エラーを解消
+            for (int i = 0; i < 2; i++)
+            {
+                this.StartPointX[i] = TJAPlayerPI.app.Skin.SkinConfig.Game.Effect.FlyingNotes.StartPointX[i];
+                this.StartPointY[i] = TJAPlayerPI.app.Skin.SkinConfig.Game.Effect.FlyingNotes.StartPointY[i];
+                this.EndPointX[i] = TJAPlayerPI.app.Skin.SkinConfig.Game.Effect.FlyingNotes.EndPointX[i];
+                this.EndPointY[i] = TJAPlayerPI.app.Skin.SkinConfig.Game.Effect.FlyingNotes.EndPointY[i];
+            }
+
             base.On活性化();
         }
 
@@ -92,7 +109,7 @@ namespace TJAPlayerPI
         /// </summary>
         public override int On進行描画()
         {
-            if (base.b活性化してない)
+            if (this.b活性化してない)
                 return 0;
 
             for (int i = 0; i < 128; i++)
@@ -132,7 +149,7 @@ namespace TJAPlayerPI
                     if (TJAPlayerPI.app.Tx.Notes != null)
                     {
                         // レーン番号(0-7)に応じてテクスチャ内の矩形を選択
-                        // 130px四方のノーツ画像を想定（TJAPlayerPIの標準仕様）
+                        // 130px四方のノーツ画像を想定
                         Rectangle rect = new Rectangle(Flying[i].Lane * 130, 0, 130, 130);
                         TJAPlayerPI.app.Tx.Notes.t2D拡大率考慮描画(TJAPlayerPI.app.Device, CTexture.RefPnt.Center, x, y, rect);
                     }
