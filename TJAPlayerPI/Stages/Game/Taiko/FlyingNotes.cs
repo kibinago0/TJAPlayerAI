@@ -66,21 +66,53 @@ internal class FlyingNotes : CActivity
 
     // CActivity 実装
 
-    public override void On活性化()
-    {
-        for (int i = 0; i < 128; i++)
-        {
-            Flying[i] = new Status();
-            Flying[i].IsUsing = false;
-            Flying[i].Counter = new CCounter();
-            Flying[i].UseFrameBasedPosition = false;
-        }
-        for (int i = 0; i < 2; i++)
-        {
-            StartPointX[i] = TJAPlayerPI.app.Skin.SkinConfig.Game.Effect.FlyingNotes.StartPointX[i];
-        }
-        base.On活性化();
-    }
+　　public override void On活性化()
+　　{
+    　　for (int i = 0; i < 128; i++)
+    　　{
+       　　 Flying[i] = new Status();
+      　　  Flying[i].IsUsing = false;
+       　　 Flying[i].Counter = new CCounter();
+       　　 Flying[i].UseFrameBasedPosition = false;
+   　　 }
+   　　 for (int i = 0; i < 2; i++)
+    　　{
+        　　StartPointX[i] = TJAPlayerPI.app.Skin.SkinConfig.Game.Effect.FlyingNotes.StartPointX[i];
+    　　}
+
+    　　// フレームベース座標の初期化（スキンで指定がない場合のデフォルト値を設定）
+    　　if (TJAPlayerPI.app.Skin.SkinConfig.Game.Effect.FlyingNotes.FramePositionsX[0].Length == 0)
+    　　{
+        　　// プレイヤー0の座標を開始点から終了点への直線移動に設定
+        　　InitializeDefaultFramePositions(0);
+    　　}
+    　　if (TJAPlayerPI.app.Skin.SkinConfig.Game.Effect.FlyingNotes.FramePositionsX[1].Length == 0)
+    　　{
+        　　// プレイヤー1の座標を開始点から終了点への直線移動に設定
+        　　InitializeDefaultFramePositions(1);
+    　　}
+
+    　　base.On活性化();
+　　}　　
+
+　　/// <summary>
+　　/// フレームベース座標のデフォルト値を初期化する（直線移動）
+　　/// </summary>
+　　private void InitializeDefaultFramePositions(int playerIndex)
+　　{
+    　　float startX = TJAPlayerPI.app.Skin.SkinConfig.Game.Effect.FlyingNotes.StartPointX[playerIndex];
+    　　float startY = TJAPlayerPI.app.Skin.SkinConfig.Game.Effect.FlyingNotes.StartPointY[playerIndex];
+    　　float endX = TJAPlayerPI.app.Skin.SkinConfig.Game.Effect.FlyingNotes.EndPointX[playerIndex];
+    　　float endY = TJAPlayerPI.app.Skin.SkinConfig.Game.Effect.FlyingNotes.EndPointY[playerIndex];
+
+    　　// 60フレーム分の座標を直線補間で計算
+    　　for (int frame = 0; frame < 60; frame++)
+    　　{
+        　　float t = frame / 59.0f; // 0.0～1.0の進行度
+        　　TJAPlayerPI.app.Skin.SkinConfig.Game.Effect.FlyingNotes.FramePositionsX[playerIndex][frame] = startX + (endX - startX) * t;
+        　　TJAPlayerPI.app.Skin.SkinConfig.Game.Effect.FlyingNotes.FramePositionsY[playerIndex][frame] = startY + (endY - startY) * t;
+    　　}
+　　}
 
     public override void On非活性化()
     {
