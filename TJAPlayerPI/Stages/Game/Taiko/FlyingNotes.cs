@@ -8,8 +8,8 @@ using FDK;
 namespace TJAPlayerPI
 {
     /// <summary>
-    /// 叩いたノーツが飛んでいく演出を制御するクラス。
-    /// 60fps(16.66ms)基準のテーブルを参照し、1フレームごとの座標を完全に制御します。
+    /// 叩いた音符が飛んでいく演出を制御するクラス。
+    /// 60fps(1/60秒)単位で定義された座標テーブルに基づいて移動します。
     /// </summary>
     internal class FlyingNotes : CActivity
     {
@@ -24,14 +24,15 @@ namespace TJAPlayerPI
             public CCounter Counter;
             public int nPlayer;
             public int nLane;
-            public bool bIsL; // 第3引数がbool型（大音符判定）であることに対応
+            public bool bIsL; // 大音符判定（外部からの引数に合わせる）
         }
 
         protected STFLY[] stフライ = new STFLY[128];
 
         /// <summary>
-        /// 1フレーム(1/60秒)ごとの相対座標テーブル
-        /// ここを書き換えることで、自由な軌道を設定できます。
+        /// 1フレーム(1/60秒)ごとの相対座標テーブル。
+        /// 配列の1要素が1フレームに対応します。
+        /// ここを編集することで、自由自在な軌道を作成できます。
         /// </summary>
         private static readonly Vector2[] FlyingPath = new Vector2[]
         {
@@ -51,11 +52,12 @@ namespace TJAPlayerPI
             new Vector2(520, -650), // 13
             new Vector2(595, -735), // 14
             new Vector2(675, -825), // 15
+            // 必要に応じて60フレーム分などを定義可能
         };
 
         private int MaxFrameCount => FlyingPath.Length;
 
-        // CAct演奏Drumsレーン太鼓.cs 等から参照されるプロパティ
+        // 外部（CAct演奏Drumsレーン太鼓など）からアクセスされる座標プロパティ
         public int[] StartPointX = new int[2];
         public int[] StartPointY = new int[2];
 
@@ -65,19 +67,21 @@ namespace TJAPlayerPI
 
         public FlyingNotes() { }
 
-        // CStage演奏画面共通.cs (line 63) での 2引数 new 呼び出しに対応
-        public FlyingNotes(object arg1, object arg2) { }
+        /// <summary>
+        /// CStage演奏画面共通.cs での new FlyingNotes(this.app, this.skin) に対応
+        /// </summary>
+        public FlyingNotes(object arg1, object arg2) : this() { }
 
         //-----------------
         // メソッド
         //-----------------
 
         /// <summary>
-        /// ノーツ飛翔アニメーションを開始します
+        /// 飛翔アニメーションを開始
         /// </summary>
         /// <param name="nLane">レーン番号</param>
-        /// <param name="nPlayer">プレイヤー番号</param>
-        /// <param name="bIsL">大音符かどうか(引数エラーCS1503対策でintからboolへ変更)</param>
+        /// <param name="nPlayer">プレイヤー(0or1)</param>
+        /// <param name="bIsL">大音符かどうか(外部呼び出し元との型整合性)</param>
         public void Start(int nLane, int nPlayer, bool bIsL)
         {
             for (int i = 0; i < 128; i++)
@@ -89,7 +93,7 @@ namespace TJAPlayerPI
                     stフライ[i].nPlayer = nPlayer;
                     stフライ[i].bIsL = bIsL;
                     
-                    // 16.66msごとにカウントアップし、配列のインデックスを回す
+                    // カウンター: 16.66msごとに1進む（60fps固定の挙動）
                     stフライ[i].Counter = new CCounter(0, MaxFrameCount - 1, 16.66, TJAPlayerPI.Timer);
                     break;
                 }
@@ -115,6 +119,9 @@ namespace TJAPlayerPI
             base.On非活性化();
         }
 
+        /// <summary>
+        /// 描画処理（毎フレーム実行）
+        /// </summary>
         public override int On進行描画()
         {
             if (base.b活性化してない) return 0;
@@ -131,20 +138,21 @@ namespace TJAPlayerPI
                     continue;
                 }
 
+                // フレーム番号を特定
                 int frameIdx = Math.Clamp(stフライ[i].Counter.n現在の値, 0, MaxFrameCount - 1);
                 Vector2 offset = FlyingPath[frameIdx];
 
-                // 描画座標の決定
+                // 外部から代入された StartPointX/Y を基準に計算
                 float drawX = this.StartPointX[stフライ[i].nPlayer] + offset.X;
                 float drawY = this.StartPointY[stフライ[i].nPlayer] + offset.Y;
 
-                // テクスチャとスキン矩形の取得 (エラーCS1061に基づき修正)
+                // 描画実行
                 if (TJAPlayerPI.Tx.FlyingNotes != null)
                 {
-                    // 大音符か小音符かで矩形を選択
+                    // 大/小 音符に応じた矩形インデックス
                     int textureIndex = stフライ[i].bIsL ? 1 : 0; 
                     
-                    // TJAPlayerPI.Skinの既存の矩形定義を参照
+                    // スキン定義の矩形を使用
                     Rectangle rect = TJAPlayerPI.Skin.stFlyingNotes_Rect[textureIndex];
 
                     TJAPlayerPI.Tx.FlyingNotes.t2D描画(
