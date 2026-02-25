@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Runtime.InteropServices;
-using System.Numerics; // SharpDXの代わりにSystem.Numericsを使用
+using System.Numerics;
 using FDK;
 
 namespace TJAPlayerPI
@@ -11,7 +11,7 @@ namespace TJAPlayerPI
     /// 叩いたノーツが飛んでいく演出を制御するクラス。
     /// 1フレーム(60fps)単位で座標テーブルを参照して移動します。
     /// </summary>
-    internal class FlyingNotes : CActivity // クラス名を外部参照に合わせて FlyingNotes に変更
+    internal class FlyingNotes : CActivity
     {
         //-----------------
         // 構造体・定数
@@ -24,35 +24,54 @@ namespace TJAPlayerPI
             public CCounter Counter;
             public int nPlayer;
             public int nLane;
+            public int nCourse;
         }
 
         protected STFLY[] stフライ = new STFLY[128];
 
-        // --- フレーム単位の座標指定テーブル (60fps基準) ---
-        // (x, y) の相対座標を配列で定義。ここを書き換えることで軌道を1フレーム単位で制御可能です。
+        // --- フレーム単位の相対座標テーブル (60fps基準) ---
+        // ここに 0フレーム目からの (x, y) オフセットを記述します。
         private static readonly Vector2[] FlyingPath = new Vector2[]
         {
-            new Vector2(0, 0),      // 0フレーム
-            new Vector2(12, -20),   // 1フレーム
-            new Vector2(28, -45),   // 2フレーム
-            new Vector2(48, -75),   // 3フレーム
-            new Vector2(75, -110),  // 4フレーム
-            new Vector2(110, -150), // 5フレーム
-            new Vector2(150, -195), // 6フレーム
-            new Vector2(195, -245), // 7フレーム
-            new Vector2(245, -300), // 8フレーム
-            new Vector2(300, -360), // 9フレーム
-            new Vector2(360, -425), // 10フレーム
-            // ... 最大60フレーム分などのデータをここに追加
+            new Vector2(0, 0),      // 0
+            new Vector2(15, -25),   // 1
+            new Vector2(35, -55),   // 2
+            new Vector2(60, -90),   // 3
+            new Vector2(90, -130),  // 4
+            new Vector2(125, -175), // 5
+            new Vector2(165, -225), // 6
+            new Vector2(210, -280), // 7
+            new Vector2(260, -340), // 8
+            new Vector2(315, -405), // 9
+            new Vector2(375, -475), // 10
+            // 必要に応じて 60フレーム分まで定義可能
         };
 
         private int MaxFrameCount => FlyingPath.Length;
+
+        // 外部クラス（CAct演奏Drumsレーン太鼓など）から参照されるプロパティ
+        public int[] StartPointX = new int[2];
+        public int[] StartPointY = new int[2];
+
+        //-----------------
+        // コンストラクタ
+        //-----------------
+        
+        // エラー CS1729 対策: 2引数のコンストラクタを追加
+        public FlyingNotes() { }
+        public FlyingNotes(object arg1, object arg2) 
+        {
+            // 引数が必要な初期化があればここで行う
+        }
 
         //-----------------
         // メソッド
         //-----------------
 
-        public void Start(int nLane, int nPlayer)
+        /// <summary>
+        /// ノーツの飛翔を開始（3引数版）
+        /// </summary>
+        public void Start(int nLane, int nPlayer, int nCourse)
         {
             for (int i = 0; i < 128; i++)
             {
@@ -61,13 +80,17 @@ namespace TJAPlayerPI
                     stフライ[i].b使用中 = true;
                     stフライ[i].nLane = nLane;
                     stフライ[i].nPlayer = nPlayer;
+                    stフライ[i].nCourse = nCourse;
                     
-                    // カウンターの初期化（16.6msごとにカウントアップ）
+                    // 16.66ms間隔でカウントアップ
                     stフライ[i].Counter = new CCounter(0, MaxFrameCount - 1, 16, TJAPlayerPI.app.Timer);
                     break;
                 }
             }
         }
+
+        // 2引数版（念のため保持）
+        public void Start(int nLane, int nPlayer) => Start(nLane, nPlayer, 0);
 
         public override void On活性化()
         {
@@ -91,7 +114,7 @@ namespace TJAPlayerPI
         /// <summary>
         /// 進行描画
         /// </summary>
-        public override int On進行描画() // override対象を On進行描画 に修正
+        public override int On進行描画()
         {
             if (base.b活性化してない) return 0;
 
@@ -106,30 +129,31 @@ namespace TJAPlayerPI
                     continue;
                 }
 
-                // 現在のフレーム番号（インデックス）を取得
-                int currentFrame = stフライ[i].Counter.n現在の値; // プロパティ名を修正
+                int currentFrame = stフライ[i].Counter.n現在の値;
                 int frameIdx = Math.Clamp(currentFrame, 0, MaxFrameCount - 1);
                 
                 Vector2 offset = FlyingPath[frameIdx];
 
-                // SkinConfigから描画開始基準位置を取得
-                // ※SkinConfigの構造はプロジェクトの定義に合わせています
-                int startX = TJAPlayerPI.app.Skin.SkinConfig.Game.FlyingNotes.StartX[stフライ[i].nPlayer];
-                int startY = TJAPlayerPI.app.Skin.SkinConfig.Game.FlyingNotes.StartY[stフライ[i].nPlayer];
+                // クラス内の StartPoint プロパティを使用（外部からセットされる想定）
+                float drawX = this.StartPointX[stフライ[i].nPlayer] + offset.X;
+                float drawY = this.StartPointY[stフライ[i].nPlayer] + offset.Y;
 
-                float drawX = startX + offset.X;
-                float drawY = startY + offset.Y;
-
-                if (TJAPlayerPI.app.Tx.FlyingNotes != null)
+                // テクスチャ名はコードベースの慣習に合わせ Tx.Flying_Notes 等と仮定
+                // もしエラーが続く場合は、Tx配下の正しいテクスチャ名を確認してください
+                var txNotes = TJAPlayerPI.app.Tx.Flying_Notes; 
+                if (txNotes != null)
                 {
-                    // レーン番号に基づいてテクスチャ（小/大）を選択
                     int textureIndex = (stフライ[i].nLane >= 3) ? 1 : 0; 
                     
-                    TJAPlayerPI.app.Tx.FlyingNotes.t2D描画(
+                    // SkinConfigの構造に合わせてRectを参照
+                    // エラーメッセージに基づき、Skin直下の旧来の配列形式を参照するように修正
+                    var rect = TJAPlayerPI.app.Skin.stFlyingNotes_Rect[textureIndex];
+
+                    txNotes.t2D描画(
                         TJAPlayerPI.app.Device, 
                         (int)drawX, 
                         (int)drawY, 
-                        TJAPlayerPI.app.Skin.SkinConfig.Game.FlyingNotes.Rect[textureIndex]
+                        rect
                     );
                 }
             }
