@@ -13,7 +13,7 @@ namespace TJAPlayerPI
     /// </summary>
     internal class FlyingNotes : CActivity
     {
-        // プロパティ (他のクラスから参照されるため、パブリックで定義)
+        // プロパティ (他のクラスから参照されるため、パブリックで保持)
         public float[] StartPointX = new float[2];
         public float[] StartPointY = new float[2];
         public float[] EndPointX = new float[2];
@@ -24,7 +24,6 @@ namespace TJAPlayerPI
         {
             this.actChipEffects = chipEffects;
             this.FireWorks = fireWorks;
-            // base.b活性化してない = true; // Error CS0200: 読み取り専用のため削除
         }
 
         // メソッド
@@ -47,19 +46,22 @@ namespace TJAPlayerPI
                     Flying[i].isRoll = isRoll;
 
                     // フレームベースモードの初期化
-                    // スキンからフレーム数を取得（デフォルトは60フレーム）
-                    int maxFrames = 60;
+                    // スキンから配列のフレーム数を取得
+                    int arrayFrames = 0;
                     if (TJAPlayerPI.app.Skin.SkinConfig.Game.Effect.FlyingNotes.FramePositionsX[nPlayer] != null)
                     {
-                        maxFrames = TJAPlayerPI.app.Skin.SkinConfig.Game.Effect.FlyingNotes.FramePositionsX[nPlayer].Length;
+                        arrayFrames = TJAPlayerPI.app.Skin.SkinConfig.Game.Effect.FlyingNotes.FramePositionsX[nPlayer].Length;
                     }
+
+                    // 全体のステップ数 = StartPoint(1) + Array(arrayFrames) + EndPoint(1)
+                    int totalSteps = arrayFrames + 2;
 
                     // CCounterを使用するが、t進行()は呼ばず、手動でn現在の値をインクリメントする。
                     // 第3引数の間隔msは、手動更新のため0に設定。
-                    Flying[i].Counter = new CCounter(0, maxFrames - 1, 0, TJAPlayerPI.app.Timer);
+                    Flying[i].Counter = new CCounter(0, totalSteps - 1, 0, TJAPlayerPI.app.Timer);
                     Flying[i].Counter.n現在の値 = 0;
                     
-                    // スキンの基本座標を保持（配列外参照時のフォールバック用）
+                    // 個別ノーツの状態として座標を保持
                     Flying[i].StartPointX = this.StartPointX[nPlayer];
                     Flying[i].StartPointY = this.StartPointY[nPlayer];
                     Flying[i].EndPointX = this.EndPointX[nPlayer];
@@ -81,8 +83,7 @@ namespace TJAPlayerPI
                 Flying[i].Counter = new CCounter();
             }
 
-            // スキン設定から座標を読み込み、クラスのフィールドにキャッシュする
-            // これにより CAct演奏Drumsレーン太鼓.cs 等からの参照エラーを解消
+            // スキン設定から座標を読み込み、クラスのフィールドにキャッシュ
             for (int i = 0; i < 2; i++)
             {
                 this.StartPointX[i] = TJAPlayerPI.app.Skin.SkinConfig.Game.Effect.FlyingNotes.StartPointX[i];
@@ -117,39 +118,49 @@ namespace TJAPlayerPI
                 if (Flying[i].IsUsing)
                 {
                     int nPlayer = Flying[i].Player;
-                    int nFrame = Flying[i].Counter.n現在の値;
-
-                    // 指定された座標データ配列から現在フレームの座標を取得
-                    // 配列が存在しない、またはインデックスが範囲外の場合はEndPointを使用
-                    float x = Flying[i].EndPointX;
-                    float y = Flying[i].EndPointY;
+                    int nStep = Flying[i].Counter.n現在の値;
 
                     float[] frameX = TJAPlayerPI.app.Skin.SkinConfig.Game.Effect.FlyingNotes.FramePositionsX[nPlayer];
                     float[] frameY = TJAPlayerPI.app.Skin.SkinConfig.Game.Effect.FlyingNotes.FramePositionsY[nPlayer];
+                    int arrayLen = (frameX != null) ? frameX.Length : 0;
 
-                    if (frameX != null && nFrame < frameX.Length)
+                    // 描画座標の決定
+                    // 順序: StartPoint (Step 0) -> Array (Step 1 to arrayLen) -> EndPoint (Step arrayLen + 1)
+                    float x, y;
+                    if (nStep == 0)
                     {
-                        x = frameX[nFrame];
+                        x = Flying[i].StartPointX;
+                        y = Flying[i].StartPointY;
                     }
-                    if (frameY != null && nFrame < frameY.Length)
+                    else if (nStep <= arrayLen)
                     {
-                        y = frameY[nFrame];
+                        int arrayIdx = nStep - 1;
+                        x = frameX[arrayIdx];
+                        y = (frameY != null && arrayIdx < frameY.Length) ? frameY[arrayIdx] : Flying[i].EndPointY;
+                    }
+                    else
+                    {
+                        x = Flying[i].EndPointX;
+                        y = Flying[i].EndPointY;
                     }
 
                     Flying[i].X = x;
                     Flying[i].Y = y;
 
-                    // 飛行中の火花エフェクト（4フレームに1回発生）
-                    if (nFrame % 4 == 0)
+                    // 飛行中の火花エフェクト（巨大ノーツのみ発生）
+                    // Lane 3, 4 は大音符、6 は大連打
+                    if (Flying[i].Lane == 3 || Flying[i].Lane == 4 || Flying[i].Lane == 6)
                     {
-                        FireWorks.Start(Flying[i].Lane, Flying[i].Player, x, y);
+                        if (nStep % 4 == 0)
+                        {
+                            FireWorks.Start(Flying[i].Lane, Flying[i].Player, x, y);
+                        }
                     }
 
                     // ノーツの描画
                     if (TJAPlayerPI.app.Tx.Notes != null)
                     {
                         // レーン番号(0-7)に応じてテクスチャ内の矩形を選択
-                        // 130px四方のノーツ画像を想定
                         Rectangle rect = new Rectangle(Flying[i].Lane * 130, 0, 130, 130);
                         TJAPlayerPI.app.Tx.Notes.t2D拡大率考慮描画(TJAPlayerPI.app.Device, CTexture.RefPnt.Center, x, y, rect);
                     }
@@ -159,7 +170,7 @@ namespace TJAPlayerPI
                     {
                         Flying[i].Counter.n現在の値++;
 
-                        // 終了判定（指定されたフレーム数に達したか）
+                        // 終了判定（全ステップ終了したか）
                         if (Flying[i].Counter.b終了値に達した)
                         {
                             // 到着時の爆発エフェクト（チップエフェクト）開始
