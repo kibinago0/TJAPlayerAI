@@ -1175,7 +1175,7 @@ internal class CSkin : IDisposable
                     public int Sine { get; set; } = 220;
 
                     /// <summary>
-                    /// イージ���グ処理を使用するかどうか（従来モード）
+                    /// イージング処理を使用するかどうか（従来モード）
                     /// </summary>
                     public bool IsUsingEasing { get; set; } = true;
 
@@ -1188,7 +1188,7 @@ internal class CSkin : IDisposable
                     /// フレームベースの座標指定を使用するかどうか
                     /// </summary>
                     public bool UseFrameBasedPosition { get; set; } = false;
-                    
+
                     /// <summary>
                     /// フレームベースモードでのタイマー値（60フレーム分のデータを使用するので調整が必要）
                     /// </summary>
@@ -1200,10 +1200,10 @@ internal class CSkin : IDisposable
                     /// </summary>
                     public float[][] FramePositionsX { get; set; } = new float[][]
                     {
-                        // プレイヤー0用（60フレーム分のX座標）
-                        new float[60] { },
-                        // プレイヤー1用（60フレーム分のX座標）
-                        new float[60] { }
+                        // プレイヤー0用（60フレーム分のX座標、デフォルト値で初期化）
+                        new float[60],
+                        // プレイヤー1用（60フレーム分のX座標、デフォルト値で初期化）
+                        new float[60]
                     };
 
                     /// <summary>
@@ -1212,10 +1212,10 @@ internal class CSkin : IDisposable
                     /// </summary>
                     public float[][] FramePositionsY { get; set; } = new float[][]
                     {
-                        // プレイヤー0用（60フレーム分のY座標）
-                        new float[60] { },
-                        // プレイヤー1用（60フレーム分のY座標）
-                        new float[60] { }
+                        // プレイヤー0用（60フレーム分のY座標、デフォルト値で初期化）
+                        new float[60],
+                        // プレイヤー1用（60フレーム分のY座標、デフォルト値で初期化）
+                        new float[60]
                     };
                 }
                 public CFire Fire { get; set; } = new();
