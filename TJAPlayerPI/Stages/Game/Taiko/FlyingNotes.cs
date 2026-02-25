@@ -10,6 +10,7 @@ namespace TJAPlayerPI
     /// <summary>
     /// 飛んでいく音符（FlyingNotes）の演出を管理するクラス。
     /// 1レンダリングフレームごとに1ステップ進む「フレームベース」の移動を実現します。
+    /// オートプレイ状態に応じて、描画開始シーケンスを動的に切り替えます。
     /// </summary>
     internal class FlyingNotes : CActivity
     {
@@ -45,6 +46,10 @@ namespace TJAPlayerPI
                     Flying[i].Player = nPlayer;
                     Flying[i].isRoll = isRoll;
 
+                    // 現在のオートプレイ状態を記録
+                    bool isAuto = TJAPlayerPI.app.ConfigToml.PlayOption.AutoPlay[nPlayer];
+                    Flying[i].IsAutoPlay = isAuto;
+
                     // フレームベースモードの初期化
                     // スキンから配列のフレーム数を取得
                     int arrayFrames = 0;
@@ -53,8 +58,10 @@ namespace TJAPlayerPI
                         arrayFrames = TJAPlayerPI.app.Skin.SkinConfig.Game.Effect.FlyingNotes.FramePositionsX[nPlayer].Length;
                     }
 
-                    // 全体のステップ数 = StartPoint(1) + Array(arrayFrames) + EndPoint(1)
-                    int totalSteps = arrayFrames + 2;
+                    // 全体のステップ数を決定
+                    // オートプレイ時: StartPoint(1) + Array(arrayFrames) + EndPoint(1) = arrayFrames + 2
+                    // マニュアル時: Array(arrayFrames) + EndPoint(1) = arrayFrames + 1
+                    int totalSteps = isAuto ? (arrayFrames + 2) : (arrayFrames + 1);
 
                     // CCounterを使用するが、t進行()は呼ばず、手動でn現在の値をインクリメントする。
                     // 第3引数の間隔msは、手動更新のため0に設定。
@@ -124,24 +131,41 @@ namespace TJAPlayerPI
                     float[] frameY = TJAPlayerPI.app.Skin.SkinConfig.Game.Effect.FlyingNotes.FramePositionsY[nPlayer];
                     int arrayLen = (frameX != null) ? frameX.Length : 0;
 
-                    // 描画座標の決定
-                    // 順序: StartPoint (Step 0) -> Array (Step 1 to arrayLen) -> EndPoint (Step arrayLen + 1)
+                    // 描画座標の決定ロジック
                     float x, y;
-                    if (nStep == 0)
+                    if (Flying[i].IsAutoPlay)
                     {
-                        x = Flying[i].StartPointX;
-                        y = Flying[i].StartPointY;
-                    }
-                    else if (nStep <= arrayLen)
-                    {
-                        int arrayIdx = nStep - 1;
-                        x = frameX[arrayIdx];
-                        y = (frameY != null && arrayIdx < frameY.Length) ? frameY[arrayIdx] : Flying[i].EndPointY;
+                        // 【オートプレイ時】StartPoint -> Array -> EndPoint
+                        if (nStep == 0)
+                        {
+                            x = Flying[i].StartPointX;
+                            y = Flying[i].StartPointY;
+                        }
+                        else if (nStep <= arrayLen)
+                        {
+                            int arrayIdx = nStep - 1;
+                            x = frameX[arrayIdx];
+                            y = (frameY != null && arrayIdx < frameY.Length) ? frameY[arrayIdx] : Flying[i].EndPointY;
+                        }
+                        else
+                        {
+                            x = Flying[i].EndPointX;
+                            y = Flying[i].EndPointY;
+                        }
                     }
                     else
                     {
-                        x = Flying[i].EndPointX;
-                        y = Flying[i].EndPointY;
+                        // 【マニュアルプレイ時】Array -> EndPoint (StartPointをスキップ)
+                        if (nStep < arrayLen)
+                        {
+                            x = frameX[nStep];
+                            y = (frameY != null && nStep < frameY.Length) ? frameY[nStep] : Flying[i].EndPointY;
+                        }
+                        else
+                        {
+                            x = Flying[i].EndPointX;
+                            y = Flying[i].EndPointY;
+                        }
                     }
 
                     Flying[i].X = x;
@@ -204,6 +228,7 @@ namespace TJAPlayerPI
             public float StartPointY;
             public float EndPointX;
             public float EndPointY;
+            public bool IsAutoPlay;
         }
 
         private Status[] Flying = new Status[128];
