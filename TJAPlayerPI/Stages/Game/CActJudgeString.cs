@@ -29,7 +29,8 @@ namespace TJAPlayerPI
         {
         }
 
-        public void Start(EJudge judge, int lag, int player, int index)
+        // 引数を (EJudge judge, int lag, CDTX.CChip pChip, int player, int index = 0) に修正
+        public void Start(EJudge judge, int lag, CDTX.CChip pChip, int player, int index = 0)
         {
             if (index < 0 || index >= 128) return;
 
@@ -74,6 +75,7 @@ namespace TJAPlayerPI
 
         public override int On進行描画()
         {
+            for (int i = 0; i < 128; i++) t進行描画(i);
             return 0;
         }
     }

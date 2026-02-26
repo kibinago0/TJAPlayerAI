@@ -9,7 +9,6 @@ namespace TJAPlayerPI
 {
     internal class CAct演奏DrumsチップファイアD : CActivity
     {
-        // プロパティ
         public struct ST状態
         {
             public CCounter ct進行;
@@ -22,20 +21,18 @@ namespace TJAPlayerPI
 
         public CAct演奏DrumsチップファイアD()
         {
-            // コンストラクタ
         }
 
-        public virtual void Start(int nLane, EJudge judge, int player, int index)
+        // 引数を (int nLane, EJudge judge, int player, int index = 0) に修正
+        public virtual void Start(int nLane, EJudge judge, int player, int index = 0)
         {
             if (index < 0 || index >= 128) return;
 
-            // 通常の爆発
             this.st状態[index].ct進行 = new CCounter(0, 13, 25, TJAPlayerPI.app.Timer);
             this.st状態[index].judge = judge;
             this.st状態[index].nPlayer = player;
             this.st状態[index].nIsBig = 0;
 
-            // 大音符の爆発
             if (nLane == 0x13 || nLane == 0x14 || nLane == 0x1A || nLane == 0x1B)
             {
                 this.st状態_大[index].ct進行 = new CCounter(0, 240, 1, TJAPlayerPI.app.Timer);
@@ -47,7 +44,6 @@ namespace TJAPlayerPI
 
         public void t進行描画(int i)
         {
-            // 小音符エフェクト
             if (this.st状態[i].ct進行 != null && !this.st状態[i].ct進行.b停止中)
             {
                 this.st状態[i].ct進行.t進行();
@@ -59,19 +55,16 @@ namespace TJAPlayerPI
                 {
                     int nX = TJAPlayerPI.app.Skin.SkinConfig.Game.ScrollFieldX[this.st状態[i].nPlayer] - 65;
                     int nY = TJAPlayerPI.app.Skin.SkinConfig.Game.JudgePointY[this.st状態[i].nPlayer] - 65;
-                    int width = 130;
-                    int height = 130;
                     int index = Math.Min(this.st状態[i].ct進行.n現在の値, 3);
 
                     if (TJAPlayerPI.app.Tx.Effects_Hit_Explosion != null)
                     {
-                        Rectangle rect = new Rectangle(index * width, (int)this.st状態[i].judge * height, width, height);
+                        Rectangle rect = new Rectangle(index * 130, (int)this.st状態[i].judge * 130, 130, 130);
                         TJAPlayerPI.app.Tx.Effects_Hit_Explosion.t2D描画(TJAPlayerPI.app.Device, nX, nY, rect);
                     }
                 }
             }
 
-            // 大音符エフェクト
             if (this.st状態_大[i].ct進行 != null && !this.st状態_大[i].ct進行.b停止中)
             {
                 this.st状態_大[i].ct進行.t進行();
@@ -107,6 +100,7 @@ namespace TJAPlayerPI
 
         public override int On進行描画()
         {
+            for (int i = 0; i < 128; i++) t進行描画(i);
             return 0;
         }
     }
