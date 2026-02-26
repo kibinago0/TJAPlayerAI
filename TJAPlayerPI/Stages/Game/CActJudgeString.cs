@@ -8,9 +8,8 @@ namespace TJAPlayerPI
 {
     internal class CActJudgeString : CActivity
     {
-        // プロパティ
         public struct ST状態
-        {    
+        {
             public CCounter ct進行;
             public EJudge judge;
             public int nPlayer;
@@ -26,23 +25,19 @@ namespace TJAPlayerPI
             new Rectangle( 0, 0,    90, 60 )		// Auto
         };
 
-        // コンストラクタ
         public CActJudgeString()
         {
-            // base.b活性化してない = true;
         }
 
-        // メソッド
         public void Start(EJudge judge, int lag, int player, int index)
         {
             if (index < 0 || index >= 128) return;
-        
+
             this.st状態[index].ct進行 = new CCounter(0, 300, 1, TJAPlayerPI.app.Timer);
             this.st状態[index].judge = judge;
             this.st状態[index].nPlayer = player;
-        }        
+        }
 
-        // 特定のインデックスのみを進行・描画するメソッド
         public void t進行描画(int i)
         {
             if (this.st状態[i].ct進行 != null && !this.st状態[i].ct進行.b停止中)
@@ -81,6 +76,5 @@ namespace TJAPlayerPI
         {
             return 0;
         }
-
     }
 }

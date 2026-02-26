@@ -12,12 +12,12 @@ namespace TJAPlayerPI;
 /// </summary>
 internal class CStage演奏画面共通 : CStage
 {
+    private int nEffectIndex = 0;
     // プロパティ
 
     public EventHandler<EventArgs>? RestartAndReloadChart;
     public EventHandler<EventArgs>? ExitGameAndGoToSongSelect;
     public EventHandler<EventArgs>? ExitGameAndGoToResult;
-    private int nEffectIndex = 0;
 
     // メソッド
     public CStage演奏画面共通()
@@ -1436,7 +1436,6 @@ internal class CStage演奏画面共通 : CStage
         int index = this.nEffectIndex;
         this.nEffectIndex = (this.nEffectIndex + 1) % 128;
         
-        // 同じインデックスでエフェクトと文字を開始
         this.actChipFireD.Start(pChip.nチャンネル番号, eJudgeResult, nPlayer, index);
         this.actJudgeString.Start(eJudgeResult, pChip.nLag, nPlayer, index);
         
