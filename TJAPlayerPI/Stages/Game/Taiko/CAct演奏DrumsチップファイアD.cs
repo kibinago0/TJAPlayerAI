@@ -1,169 +1,119 @@
-﻿using FDK;
-using Silk.NET.OpenAL;
+﻿using System;
+using System.Collections.Generic;
+using System.Drawing;
+using System.Text;
+using FDK;
 
-namespace TJAPlayerPI;
-
-internal class CAct演奏DrumsチップファイアD : CActivity
+namespace TJAPlayerPI
 {
-    // コンストラクタ
-
-    public CAct演奏DrumsチップファイアD()
+    internal class CAct演奏DrumsチップファイアD : CActivity
     {
-    }
-
-
-    // メソッド
-
-    public virtual void Start(int nLane, EJudge judge, int player)
-    {
-        for (int j = 0; j < 3 * 4; j++)
+        // プロパティ
+        public struct ST状態
         {
-            if (!this.st状態[j].b使用中)
-            //for( int n = 0; n < 1; n++ )
-            {
-                this.st状態[j].b使用中 = true;
-                //this.st状態[ n ].ct進行 = new CCounter( 0, 9, 20, CDTXMania.Timer );
-                this.st状態[j].ct進行 = new CCounter(0, 3 + nOutLength, 25, TJAPlayerPI.app.Timer);
-                this.st状態[j].judge = judge;
-                this.st状態[j].nPlayer = player;
-                this.st状態_大[j].nPlayer = player;
+            public CCounter ct進行;
+            public EJudge judge;
+            public int nPlayer;
+            public int nIsBig;
+        }
+        public ST状態[] st状態 = new ST状態[128];
+        public ST状態[] st状態_大 = new ST状態[128];
 
-                switch (nLane)
-                {
-                    case 0x11:
-                    case 0x12:
-                        this.st状態[j].nIsBig = 0;
-                        break;
-                    case 0x13:
-                    case 0x14:
-                    case 0x1A:
-                    case 0x1B:
-                        this.st状態_大[j].ct進行 = new CCounter(0, 240, 1, TJAPlayerPI.app.Timer);//20
-                        this.st状態_大[j].judge = judge;
-                        this.st状態_大[j].nIsBig = 1;
-                        break;
-                }
-                break;
+        // コンストラクタ
+        public CAct演奏DrumsチップファイアD()
+        {
+            // base.b活性化してない = true; // 読み取り専用エラー回避のため削除
+        }
+
+        // メソッド
+        // インデックスを外部から指定できるように変更
+        public virtual void Start(int nLane, EJudge judge, int player, int index)
+        {
+            if (index < 0 || index >= 128) return;
+
+            // 通常の爆発 (13フレーム)
+            this.st状態[index].ct進行 = new CCounter(0, 13, 25, TJAPlayerPI.app.Timer);
+            this.st状態[index].judge = judge;
+            this.st状態[index].nPlayer = player;
+            this.st状態[index].nIsBig = 0;
+
+            // 大音符の爆発
+            if (nLane == 0x13 || nLane == 0x14 || nLane == 0x1A || nLane == 0x1B)
+            {
+                this.st状態_大[index].ct進行 = new CCounter(0, 240, 1, TJAPlayerPI.app.Timer);
+                this.st状態_大[index].judge = judge;
+                this.st状態_大[index].nPlayer = player;
+                this.st状態_大[index].nIsBig = 1;
             }
         }
-    }
 
-    // CActivity 実装
-
-    public override void On活性化()
-    {
-        for (int i = 0; i < 3 * 4; i++)
+        // 特定のインデックスのみを進行・描画するメソッド
+        public void t進行描画(int i)
         {
-            this.st状態[i].ct進行 = new CCounter();
-            this.st状態[i].b使用中 = false;
-            this.st状態_大[i].ct進行 = new CCounter();
-        }
-        base.On活性化();
-    }
-    public override void On非活性化()
-    {
-        for (int i = 0; i < 3 * 4; i++)
-        {
-            this.st状態[i].ct進行 = null;
-            this.st状態_大[i].ct進行 = null;
-        }
-        base.On非活性化();
-    }
-    public override int On進行描画()
-    {
-        if (!base.b活性化してない)
-        {
-            for (int i = 0; i < 3 * 4; i++)
+            // 小音符エフェクト
+            if (this.st状態[i].ct進行 != null && !this.st状態[i].ct進行.b停止中)
             {
-                if (this.st状態[i].b使用中)
+                this.st状態[i].ct進行.t進行();
+                if (this.st状態[i].ct進行.b終了値に達した)
                 {
-                    if (!this.st状態[i].ct進行.b停止中)
+                    this.st状態[i].ct進行.t停止();
+                }
+                else
+                {
+                    int nX = TJAPlayerPI.app.Skin.SkinConfig.Game.ScrollFieldX[this.st状態[i].nPlayer] - 65;
+                    int nY = TJAPlayerPI.app.Skin.SkinConfig.Game.JudgePointY[this.st状態[i].nPlayer] - 65;
+                    int width = 130;
+                    int height = 130;
+                    int index = Math.Min(this.st状態[i].ct進行.n現在の値, 3);
+
+                    if (TJAPlayerPI.app.Tx.Effects_Hit_Explosion != null)
                     {
-                        this.st状態[i].ct進行.t進行();
-                        if (this.st状態[i].ct進行.b終了値に達した)
-                        {
-                            this.st状態[i].ct進行.t停止();
-                            this.st状態[i].b使用中 = false;
-                        }
-
-                        // (When performing calibration, reduce visual distraction
-                        // and current judgment feedback near the judgment position.)
-                        if (TJAPlayerPI.app.Tx.Effects_Hit_Explosion is not null && !TJAPlayerPI.IsPerformingCalibration)
-                        {
-                            int width = TJAPlayerPI.app.Skin.SkinConfig.Game.Effect.HitExplosion.Width;
-                            int height = TJAPlayerPI.app.Skin.SkinConfig.Game.Effect.HitExplosion.Height;
-
-                            int n = this.st状態[i].nIsBig == 1 ? (height * 2) : 0;
-                            int nX = (TJAPlayerPI.app.Skin.SkinConfig.Game.ScrollFieldX[this.st状態[i].nPlayer]) - (width / 2);
-                            int nY = (TJAPlayerPI.app.Skin.SkinConfig.Game.JudgePointY[this.st状態[i].nPlayer]) - (height / 2);
-
-                            float value = Math.Max(this.st状態[i].ct進行.n現在の値 - 3, 0);
-                            value /= nOutLength;
-
-                            float opacity = 1.0f - value;
-                            TJAPlayerPI.app.Tx.Effects_Hit_Explosion.Opacity = (int)(opacity * 255);
-
-                            int index = Math.Min(this.st状態[i].ct進行.n現在の値, 3);
-
-                            switch (st状態[i].judge)
-                            {
-                                case EJudge.Perfect:
-                                case EJudge.AutoPerfect:
-                                    if (!this.st状態_大[i].ct進行.b停止中 && TJAPlayerPI.app.Tx.Effects_Hit_Explosion_Big is not null && this.st状態_大[i].nIsBig == 1)
-                                    {
-                                        TJAPlayerPI.app.Tx.Effects_Hit_Explosion.t2D描画(TJAPlayerPI.app.Device, nX, nY, new Rectangle(index * width, n + (height * 2), width, height));
-                                    }
-                                    else
-                                    {
-                                        TJAPlayerPI.app.Tx.Effects_Hit_Explosion.t2D描画(TJAPlayerPI.app.Device, nX, nY, new Rectangle(index * width, n, height, height));
-                                    }
-                                    break;
-                                case EJudge.Good:
-                                    if (!this.st状態_大[i].ct進行.b停止中 && TJAPlayerPI.app.Tx.Effects_Hit_Explosion_Big is not null && this.st状態_大[i].nIsBig == 1)
-                                    {
-                                        TJAPlayerPI.app.Tx.Effects_Hit_Explosion.t2D描画(TJAPlayerPI.app.Device, nX, nY, new Rectangle(index * width, n + (height * 3), width, height));
-                                    }
-                                    else
-                                    {
-                                        TJAPlayerPI.app.Tx.Effects_Hit_Explosion.t2D描画(TJAPlayerPI.app.Device, nX, nY, new Rectangle(index * width, n + height, width, height));
-                                    }
-                                    break;
-                                case EJudge.Miss:
-                                case EJudge.Bad:
-                                    break;
-                            }
-                        }
+                        Rectangle rect = new Rectangle(index * width, (int)this.st状態[i].judge * height, width, height);
+                        TJAPlayerPI.app.Tx.Effects_Hit_Explosion.t2D描画(TJAPlayerPI.app.Device, nX, nY, rect);
                     }
                 }
             }
-
-            for (int i = 0; i < 3 * 4; i++)
+        
+            // 大音符エフェクト
+            if (this.st状態_大[i].ct進行 != null && !this.st状態_大[i].ct進行.b停止中)
             {
-                if (!this.st状態_大[i].ct進行.b停止中)
+                this.st状態_大[i].ct進行.t進行();
+                if (this.st状態_大[i].ct進行.b終了値に達した)
                 {
-                    this.st状態_大[i].ct進行.t進行();
-                    if (this.st状態_大[i].ct進行.b終了値に達した)
+                    this.st状態_大[i].ct進行.t停止();
+                }
+                else
+                {
+                    int nX = TJAPlayerPI.app.Skin.SkinConfig.Game.ScrollFieldX[this.st状態_大[i].nPlayer];
+                    int nY = TJAPlayerPI.app.Skin.SkinConfig.Game.JudgePointY[this.st状態_大[i].nPlayer];
+                    float value = (float)this.st状態_大[i].ct進行.n現在の値 / 240f;
+            
+                    if (TJAPlayerPI.app.Tx.Effects_Hit_Explosion_Big != null)
                     {
-                        this.st状態_大[i].ct進行.t停止();
-                    }
-                    if (TJAPlayerPI.app.Tx.Effects_Hit_Explosion_Big is not null && this.st状態_大[i].nIsBig == 1)
-                    {
-                        int x = TJAPlayerPI.app.Skin.SkinConfig.Game.ScrollFieldX[this.st状態_大[i].nPlayer];
-                        int y = TJAPlayerPI.app.Skin.SkinConfig.Game.JudgePointY[this.st状態[i].nPlayer];
-
-                        float value = this.st状態_大[i].ct進行.n現在の値 / 120.0f;
-
-                        DrawExpBig(x, y, value, 0.65f, 1.15f, 1.4f, st状態_大[i].judge, false);
-                        if (value >= 1)
-                        {
-                            DrawExpBig(x, y, value - 1.0f, 0.4f, 0.95f, 1.0f, st状態_大[i].judge, true);
-                        }
+                        float scale = 1.0f + (float)Math.Sin(value * Math.PI * 0.5f) * 0.5f;
+                        TJAPlayerPI.app.Tx.Effects_Hit_Explosion_Big.vcScaling = new System.Numerics.Vector2(scale);
+                        TJAPlayerPI.app.Tx.Effects_Hit_Explosion_Big.t2D拡大率考慮描画(TJAPlayerPI.app.Device, CTexture.RefPnt.Center, nX, nY);
                     }
                 }
             }
+        }  
+
+        public override void On活性化()
+        {
+            for (int i = 0; i < 128; i++)
+            {
+                this.st状態[i].ct進行 = new CCounter();
+                this.st状態_大[i].ct進行 = new CCounter();
+            }
+            base.On活性化();
         }
-        return 0;
+
+        public override int On進行描画()
+        {
+            return 0;
+        }
     }
+}
 
 
     // その他

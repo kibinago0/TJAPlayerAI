@@ -17,6 +17,7 @@ internal class CStage演奏画面共通 : CStage
     public EventHandler<EventArgs>? RestartAndReloadChart;
     public EventHandler<EventArgs>? ExitGameAndGoToSongSelect;
     public EventHandler<EventArgs>? ExitGameAndGoToResult;
+    private int nEffectIndex = 0;
 
     // メソッド
     public CStage演奏画面共通()
@@ -611,6 +612,13 @@ internal class CStage演奏画面共通 : CStage
             // キー入力
 
             this.tキー入力();
+        }
+        // 128個のスロットをループし、1ヒットごとに「爆発 -> 判定文字」の順で描画
+        // これにより、新しいヒットが古いヒットを文字ごと上書きします
+        for (int i = 0; i < 128; i++)
+        {
+            this.actChipFireD.t進行描画(i);
+            this.actJudgeString.t進行描画(i);
         }
         this.sw.Stop();
         return 0;
@@ -1424,6 +1432,16 @@ internal class CStage演奏画面共通 : CStage
         {
             CLagLogger.Add(nPlayer, pChip);
         }
+
+        int index = this.nEffectIndex;
+        this.nEffectIndex = (this.nEffectIndex + 1) % 128;
+        
+        // 同じインデックスでエフェクトと文字を開始
+        this.actChipFireD.Start(pChip.nチャンネル番号, eJudgeResult, nPlayer, index);
+        this.actJudgeString.Start(eJudgeResult, pChip.nLag, nPlayer, index);
+        
+        // FlyingNotesは従来通り（要望により変更なし）
+        this.FlyingNotes.Start(nFly, nPlayer);
 
         if (pChip.nチャンネル番号 == 0x15 || pChip.nチャンネル番号 == 0x16)
         {
