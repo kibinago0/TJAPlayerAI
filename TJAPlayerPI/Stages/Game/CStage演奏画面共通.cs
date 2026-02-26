@@ -542,7 +542,7 @@ internal class CStage演奏画面共通 : CStage
             this.FireWorks.On進行描画();
             this.actChipEffects.On進行描画();
             this.FlyingNotes.On進行描画();
-            // 修正後
+            // --- 修正後 ---
             for (int i = 0; i < 128; i++)
             {
                 this.actChipFireD.t進行描画(i);
@@ -2297,9 +2297,15 @@ internal class CStage演奏画面共通 : CStage
             }
 
 
-            //this.actChipFireTaiko.Start( nFly, nPlayer );
+            // --- 修正後 ---
+            int index0 = this.nEffectIndex;
+            this.nEffectIndex = (this.nEffectIndex + 1) % 128;
+            
+            int nFly = pChip.nチャンネル番号 < 0x1A ? (pChip.nチャンネル番号 - 0x10) : (pChip.nチャンネル番号 - 0x17);
             this.actTaikoLaneFlash.PlayerLane[nPlayer].Start(PlayerLane.FlashType.Hit);
             this.FlyingNotes.Start(nFly, nPlayer);
+            this.actJudgeString.Start(e判定, (int)(nHitTime - pChip.n発声時刻ms), pChip, nPlayer, index0);
+            this.actChipFireD.Start(pChip.nチャンネル番号, e判定, nPlayer, index0);
         }
 
         return true;

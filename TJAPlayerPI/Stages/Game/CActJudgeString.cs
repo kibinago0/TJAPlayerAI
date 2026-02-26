@@ -74,7 +74,6 @@ namespace TJAPlayerPI
 
         public override int On進行描画()
         {
-            for (int i = 0; i < 128; i++) t進行描画(i);
             return 0;
         }
     }
