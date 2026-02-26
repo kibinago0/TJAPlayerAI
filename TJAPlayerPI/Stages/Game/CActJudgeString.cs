@@ -29,8 +29,7 @@ namespace TJAPlayerPI
         {
         }
 
-        // 引数を (EJudge judge, int lag, CDTX.CChip pChip, int player, int index = 0) に修正
-        public void Start(EJudge judge, int lag, CDTX.CChip pChip, int player, int index = 0)
+        public void Start(EJudge judge, int lag, CDTX.CChip pChip, int player, int index)
         {
             if (index < 0 || index >= 128) return;
 

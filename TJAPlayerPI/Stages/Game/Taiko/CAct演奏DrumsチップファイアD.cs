@@ -14,7 +14,6 @@ namespace TJAPlayerPI
             public CCounter ct進行;
             public EJudge judge;
             public int nPlayer;
-            public int nIsBig;
         }
         public ST状態[] st状態 = new ST状態[128];
         public ST状態[] st状態_大 = new ST状態[128];
@@ -23,22 +22,19 @@ namespace TJAPlayerPI
         {
         }
 
-        // 引数を (int nLane, EJudge judge, int player, int index = 0) に修正
-        public virtual void Start(int nLane, EJudge judge, int player, int index = 0)
+        public virtual void Start(int nLane, EJudge judge, int player, int index)
         {
             if (index < 0 || index >= 128) return;
 
             this.st状態[index].ct進行 = new CCounter(0, 13, 25, TJAPlayerPI.app.Timer);
             this.st状態[index].judge = judge;
             this.st状態[index].nPlayer = player;
-            this.st状態[index].nIsBig = 0;
 
             if (nLane == 0x13 || nLane == 0x14 || nLane == 0x1A || nLane == 0x1B)
             {
                 this.st状態_大[index].ct進行 = new CCounter(0, 240, 1, TJAPlayerPI.app.Timer);
                 this.st状態_大[index].judge = judge;
                 this.st状態_大[index].nPlayer = player;
-                this.st状態_大[index].nIsBig = 1;
             }
         }
 

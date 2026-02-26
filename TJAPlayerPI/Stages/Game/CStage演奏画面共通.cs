@@ -11,9 +11,8 @@ namespace TJAPlayerPI;
 /// 演奏画面のクラス
 /// </summary>
 internal class CStage演奏画面共通 : CStage
-private int nEffectIndex = 0;
 {
-    
+    private int nEffectIndex = 0;
     // プロパティ
 
     public EventHandler<EventArgs>? RestartAndReloadChart;
@@ -615,13 +614,6 @@ private int nEffectIndex = 0;
             // キー入力
 
             this.tキー入力();
-        }
-        // 128個のスロットをループし、1ヒットごとに「爆発 -> 判定文字」の順で描画
-        // これにより、新しいヒットが古いヒットを文字ごと上書きします
-        for (int i = 0; i < 128; i++)
-        {
-            this.actChipFireD.t進行描画(i);
-            this.actJudgeString.t進行描画(i);
         }
         this.sw.Stop();
         return 0;
@@ -1516,6 +1508,7 @@ private int nEffectIndex = 0;
         {
             if (eJudgeResult != EJudge.AutoPerfect && eJudgeResult != EJudge.Miss)
             {
+                // 修正後
                 int index1 = this.nEffectIndex;
                 this.nEffectIndex = (this.nEffectIndex + 1) % 128;
                 this.actJudgeString.Start(EJudge.Bad, pChip.nLag, pChip, nPlayer, index1);
@@ -1533,6 +1526,7 @@ private int nEffectIndex = 0;
 
             if (eJudgeResult != EJudge.AutoPerfect && eJudgeResult != EJudge.Miss)
             {
+                // 修正後
                 int index2 = this.nEffectIndex;
                 this.nEffectIndex = (this.nEffectIndex + 1) % 128;
                 this.actJudgeString.Start(bAutoPlay ? EJudge.AutoPerfect : eJudgeResult, pChip.nLag, pChip, nPlayer, index2);
