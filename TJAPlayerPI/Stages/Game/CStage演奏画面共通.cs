@@ -12,7 +12,6 @@ namespace TJAPlayerPI;
 /// </summary>
 internal class CStage演奏画面共通 : CStage
 {
-    private int nEffectIndex = 0;
     // プロパティ
 
     public EventHandler<EventArgs>? RestartAndReloadChart;
@@ -542,12 +541,7 @@ internal class CStage演奏画面共通 : CStage
             this.FireWorks.On進行描画();
             this.actChipEffects.On進行描画();
             this.FlyingNotes.On進行描画();
-            // --- 修正後 ---
-            for (int i = 0; i < 128; i++)
-            {
-                this.actChipFireD.t進行描画(i);
-                this.actJudgeString.t進行描画(i);
-            }
+            this.actChipFireD.On進行描画();
 
             this.actComboBalloon.On進行描画();
 
@@ -555,6 +549,9 @@ internal class CStage演奏画面共通 : CStage
             {
                 this.actRoll.On進行描画(this.n現在の連打数[i], i);
             }
+
+            if (!TJAPlayerPI.app.ConfigToml.Game.NoInfo)
+                this.actJudgeString.t進行描画();
 
             if (!TJAPlayerPI.app.ConfigToml.Game.NoInfo)
                 this.t進行描画_パネル文字列();
@@ -1428,15 +1425,6 @@ internal class CStage演奏画面共通 : CStage
             CLagLogger.Add(nPlayer, pChip);
         }
 
-        int index = this.nEffectIndex;
-        this.nEffectIndex = (this.nEffectIndex + 1) % 128;
-        
-        this.actChipFireD.Start(pChip.nチャンネル番号, eJudgeResult, nPlayer, index);
-        this.actJudgeString.Start(eJudgeResult, pChip.nLag, nPlayer, index);
-        
-        // FlyingNotesは従来通り（要望により変更なし）
-        this.FlyingNotes.Start(nFly, nPlayer);
-
         if (pChip.nチャンネル番号 == 0x15 || pChip.nチャンネル番号 == 0x16)
         {
             #region[ 連打 ]
@@ -1508,11 +1496,7 @@ internal class CStage演奏画面共通 : CStage
         {
             if (eJudgeResult != EJudge.AutoPerfect && eJudgeResult != EJudge.Miss)
             {
-                // 修正後
-                int index1 = this.nEffectIndex;
-                this.nEffectIndex = (this.nEffectIndex + 1) % 128;
-                this.actJudgeString.Start(EJudge.Bad, pChip.nLag, pChip, nPlayer, index1);
-                this.actChipFireD.Start(0x11, eJudgeResult, nPlayer, index1);
+                this.actJudgeString.Start(EJudge.Bad, pChip.nLag, pChip, nPlayer);
                 actLaneTaiko.Start(0x11, eJudgeResult, true, nPlayer);
                 actChipFireD.Start(0x11, eJudgeResult, nPlayer);
             }
@@ -1526,11 +1510,7 @@ internal class CStage演奏画面共通 : CStage
 
             if (eJudgeResult != EJudge.AutoPerfect && eJudgeResult != EJudge.Miss)
             {
-                // 修正後
-                int index2 = this.nEffectIndex;
-                this.nEffectIndex = (this.nEffectIndex + 1) % 128;
-                this.actJudgeString.Start(bAutoPlay ? EJudge.AutoPerfect : eJudgeResult, pChip.nLag, pChip, nPlayer, index2);
-                this.actChipFireD.Start(pChip.nチャンネル番号, eJudgeResult, nPlayer, index2);
+                this.actJudgeString.Start(bAutoPlay ? EJudge.AutoPerfect : eJudgeResult, pChip.nLag, pChip, nPlayer);
                 actLaneTaiko.Start(pChip.nチャンネル番号, eJudgeResult, true, nPlayer);
                 actChipFireD.Start(pChip.nチャンネル番号, eJudgeResult, nPlayer);
             }
@@ -2297,15 +2277,9 @@ internal class CStage演奏画面共通 : CStage
             }
 
 
-            // --- 修正後 ---
-            int index0 = this.nEffectIndex;
-            this.nEffectIndex = (this.nEffectIndex + 1) % 128;
-            
-            int nFly = pChip.nチャンネル番号 < 0x1A ? (pChip.nチャンネル番号 - 0x10) : (pChip.nチャンネル番号 - 0x17);
+            //this.actChipFireTaiko.Start( nFly, nPlayer );
             this.actTaikoLaneFlash.PlayerLane[nPlayer].Start(PlayerLane.FlashType.Hit);
             this.FlyingNotes.Start(nFly, nPlayer);
-            this.actJudgeString.Start(e判定, (int)(nHitTime - pChip.n発声時刻ms), pChip, nPlayer, index0);
-            this.actChipFireD.Start(pChip.nチャンネル番号, e判定, nPlayer, index0);
         }
 
         return true;
