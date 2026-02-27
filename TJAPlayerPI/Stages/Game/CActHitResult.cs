@@ -21,6 +21,15 @@ namespace TJAPlayerPI
 
         private STHit[] stヒット状態 = new STHit[128]; // 最大同時表示数
 
+        private readonly Rectangle[] st判定文字列 = new Rectangle[]
+        {
+            new Rectangle( 0, 0,    90, 60 ),   // Perfect (良)
+            new Rectangle( 0, 60,   90, 60 ),   // Good (可)
+            new Rectangle( 0, 120,  90, 60 ),   // Bad (不可/叩き)
+            new Rectangle( 0, 120,  90, 60 ),   // Miss (不可/見逃し)
+            new Rectangle( 0, 0,    90, 60 )    // Auto (オート)
+        };
+
         public CActHitResult()
         {
             for (int i = 0; i < 128; i++)
