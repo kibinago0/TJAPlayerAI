@@ -4182,6 +4182,13 @@ internal class CDTX : CActivity
         {
             if (double.TryParse(strCommandParam, out var offset))
             {
+                this.nOFFSET = (int)(offset * 1000);
+                this.bOFFSETの値がマイナスである = this.nOFFSET < 0 ? true : false;
+
+                this.listBPM[0].bpm_change_bmscroll_time = -2000 * this.dbNowBPM / 15000;
+                if (this.bOFFSETの値がマイナスである == true)
+                    this.nOFFSET = this.nOFFSET * -1;
+                    
                 // 譜面のOFFSET(秒)をミリ秒に変換し、グローバルオフセット(ms)を足す
                 // 全体を (int) で囲って確実に整数にします
                 this.nOFFSET = (int)Math.Round(offset * 1000.0) + TJAPlayerPI.app.ConfigToml.PlayOption.GlobalOffsetMs;
