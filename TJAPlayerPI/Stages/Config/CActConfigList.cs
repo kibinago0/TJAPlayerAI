@@ -483,6 +483,15 @@ internal class CActConfigList : CActivity
         this.list項目リスト.Add(this.iTaikoAutoRoll);
         #endregion
 
+        this.iGlobalOffsetMs = new CItemInteger("Global Offset", -1000, 1000, TJAPlayerPI.app.ConfigToml.PlayOption.GlobalOffsetMs,
+            "譜面全体のズレを補正します。\n" +
+            "-1000～1000ms を指定可能です。\n" +
+            "正の数で遅らせ、負の数で早めます。",
+            "Global offset for all charts.\n" +
+            "You can set from -1000 to 1000ms.\n" +
+            "Positive values delay, negative values advance.");
+        this.list項目リスト.Add(this.iGlobalOffsetMs);
+
         this.iDrumsScrollSpeed1P = new CItemInteger("1P ScrollSpeed", 1, 2000, TJAPlayerPI.app.ConfigToml.PlayOption.ScrollSpeed[0],
             "演奏時のドラム譜面のスクロールの\n" +
             "速度を指定します。\n" +
@@ -1492,6 +1501,7 @@ internal class CActConfigList : CActivity
     private CItemToggle iTaikoAutoPlay;
     private CItemToggle iTaikoAutoPlay2P;
     private CItemToggle iTaikoAutoRoll;
+    private CItemInteger iGlobalOffsetMs;
     private CItemList iTaikoDefaultCourse; //2017.01.30 DD デフォルトでカーソルをあわせる難易度
     private CItemList iTaikoScoreMode;
     private CItemList iTaikoBranchAnime;
@@ -1618,6 +1628,7 @@ internal class CActConfigList : CActivity
         TJAPlayerPI.app.ConfigToml.PlayOption.AutoPlay[1] = this.iTaikoAutoPlay2P.bON;
         TJAPlayerPI.app.ConfigToml.PlayOption.AutoRoll = this.iTaikoAutoRoll.bON;
 
+        TJAPlayerPI.app.ConfigToml.PlayOption.GlobalOffsetMs = this.iGlobalOffsetMs.nValue;
         TJAPlayerPI.app.ConfigToml.PlayOption.ScrollSpeed[0] = this.iDrumsScrollSpeed1P.nValue;
         TJAPlayerPI.app.ConfigToml.PlayOption.ScrollSpeed[1] = this.iDrumsScrollSpeed2P.nValue;
         //CDTXMania.ConfigIni.bドラムコンボ表示 = this.iDrumsComboDisp.bON;

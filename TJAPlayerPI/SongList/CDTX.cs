@@ -4179,6 +4179,7 @@ internal class CDTX : CActivity
         }
 
         if (HeaderDict.TryGetValue("OFFSET", out strCommandParam))
+        {
             if (double.TryParse(strCommandParam, out var offset))
             {
                 this.nOFFSET = (int)(offset * 1000);
@@ -4187,7 +4188,15 @@ internal class CDTX : CActivity
                 this.listBPM[0].bpm_change_bmscroll_time = -2000 * this.dbNowBPM / 15000;
                 if (this.bOFFSETの値がマイナスである == true)
                     this.nOFFSET = this.nOFFSET * -1; //OFFSETは秒を加算するので、必ず正の数にすること。
+                
+                this.nOFFSET = offset + (TJAPlayerPI.app.ConfigToml.PlayOption.GlobalOffsetMs / 1000.0);
             }
+        }
+        else
+        {
+            // OFFSETヘッダがない場合も、ベースとしてグローバルオフセットを適用
+            this.nOFFSET = (TJAPlayerPI.app.ConfigToml.PlayOption.GlobalOffsetMs / 1000.0);
+        }
 
         if (HeaderDict.TryGetValue("MOVIEOFFSET", out strCommandParam))
             if (double.TryParse(strCommandParam, out var offset))
