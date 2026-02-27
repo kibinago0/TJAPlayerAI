@@ -837,9 +837,6 @@ internal class CDTX : CActivity
         }
         #endregion
 
-        int totalAdjust = nBGMAdjust + TJAPlayerPI.app.ConfigToml.PlayOption.GlobalOffsetMs;
-        this.t各自動再生音チップの再生時刻を変更する(totalAdjust);
-
         #region [ 拍子_拍線の挿入 ]
         if (this.listChip.Count > 0)
         {
@@ -4182,7 +4179,6 @@ internal class CDTX : CActivity
         }
 
         if (HeaderDict.TryGetValue("OFFSET", out strCommandParam))
-        {
             if (double.TryParse(strCommandParam, out var offset))
             {
                 this.nOFFSET = (int)(offset * 1000);
@@ -4190,19 +4186,8 @@ internal class CDTX : CActivity
 
                 this.listBPM[0].bpm_change_bmscroll_time = -2000 * this.dbNowBPM / 15000;
                 if (this.bOFFSETの値がマイナスである == true)
-                    this.nOFFSET = this.nOFFSET * -1;
-                    
-                // 譜面のOFFSET(秒)をミリ秒に変換し、グローバルオフセット(ms)を足す
-                // 全体を (int) で囲って確実に整数にします
-                this.nOFFSET = (int)Math.Round(offset * 1000.0);
+                    this.nOFFSET = this.nOFFSET * -1; //OFFSETは秒を加算するので、必ず正の数にすること。
             }
-        }
-        else
-        {
-            // OFFSETヘッダがない場合は、設定のグローバルオフセット(ms)をそのまま代入
-            // ここで / 1000.0 をしていたのがエラーの原因でした
-            this.nOFFSET = TJAPlayerPI.app.ConfigToml.PlayOption.GlobalOffsetMs;
-        }
 
         if (HeaderDict.TryGetValue("MOVIEOFFSET", out strCommandParam))
             if (double.TryParse(strCommandParam, out var offset))

@@ -473,12 +473,6 @@ public class CConfigToml
         public int AutoRollSpeed { get; set; } = 67;
         public int TrainingSkipMeasures { get; set; } = 5;
         public int TrainingJumpInterval { get; set; } = 750;
-        private int _GlobalOffsetMs = 0;
-        public int GlobalOffsetMs
-        {
-            get => _GlobalOffsetMs;
-            set => _GlobalOffsetMs = Math.Clamp(value, -1000, 1000);
-        }
     }
 
     public Dictionary<int, string> JoystickGUID { get; set; } = new();
@@ -830,8 +824,6 @@ public class CConfigToml
             sw.WriteLine("# 特訓モード時にジャンプポイントに飛ばすための時間(ms)");
             sw.WriteLine("# 指定ms以内に5回縁を叩いてください");
             sw.WriteLine("{0} = {1}", nameof(this.PlayOption.TrainingJumpInterval), this.PlayOption.TrainingJumpInterval);
-            sw.WriteLine("# 譜面全体のオフセット (ms)");
-            sw.WriteLine("{0} = {1}", nameof(this.PlayOption.GlobalOffsetMs), this.PlayOption.GlobalOffsetMs);
             sw.WriteLine();
             sw.WriteLine("[{0}]", nameof(this.JoystickGUID));
             foreach (var pair in JoystickGUID)
