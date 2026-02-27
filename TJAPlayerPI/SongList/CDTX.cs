@@ -4189,7 +4189,7 @@ internal class CDTX : CActivity
                 if (this.bOFFSETの値がマイナスである == true)
                     this.nOFFSET = this.nOFFSET * -1; //OFFSETは秒を加算するので、必ず正の数にすること。
                 
-                this.nOFFSET = offset + (TJAPlayerPI.app.ConfigToml.PlayOption.GlobalOffsetMs / 1000.0);
+                this.nOFFSET = (int)(offset * 1000.0) + TJAPlayerPI.app.ConfigToml.PlayOption.GlobalOffsetMs;
             }
         }
         else
