@@ -125,8 +125,11 @@ namespace FDK
                         oldestKey = kvp.Key;
                     }
                 }
-                _cache[oldestKey].bmp.Dispose();
-                _cache.Remove(oldestKey);
+                if (oldestTick != long.MaxValue)
+                {
+                    _cache[oldestKey].bmp.Dispose();
+                    _cache.Remove(oldestKey);
+                }
             }
 
             var newEntry = new FontCache { bmp = bmp, lastUsedTick = DateTime.Now.Ticks };
