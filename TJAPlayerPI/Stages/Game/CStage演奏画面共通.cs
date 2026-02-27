@@ -22,7 +22,7 @@ internal class CStage演奏画面共通 : CStage
     public CStage演奏画面共通()
     {
         base.listChildren.Add(this.actCombo = new CAct演奏Combo共通());
-        base.listChildren.Add(this.actHitResult = new CActHitResult());
+        base.listChildren.Add(this.actChipFireD = new CAct演奏DrumsチップファイアD());
         base.listChildren.Add(this.Rainbow = new Rainbow(this));
         base.listChildren.Add(this.actGauge = new CAct演奏ゲージ共通()
         {
@@ -31,6 +31,7 @@ internal class CStage演奏画面共通 : CStage
             MaxIn = tMaxIn,
             MaxOut = tMaxOut
         });
+        base.listChildren.Add(this.actJudgeString = new CActJudgeString());
         base.listChildren.Add(this.actTaikoLaneFlash = new TaikoLaneFlash());
         base.listChildren.Add(this.actDan = new Dan_Cert(this));
         base.listChildren.Add(this.actScore = new CActScore(actDan));
@@ -540,7 +541,7 @@ internal class CStage演奏画面共通 : CStage
             this.FireWorks.On進行描画();
             this.actChipEffects.On進行描画();
             this.FlyingNotes.On進行描画();
-            this.actHitResult.On進行描画();
+            this.actChipFireD.On進行描画();
 
             this.actComboBalloon.On進行描画();
 
@@ -549,6 +550,8 @@ internal class CStage演奏画面共通 : CStage
                 this.actRoll.On進行描画(this.n現在の連打数[i], i);
             }
 
+            if (!TJAPlayerPI.app.ConfigToml.Game.NoInfo)
+                this.actJudgeString.t進行描画();
 
             if (!TJAPlayerPI.app.ConfigToml.Game.NoInfo)
                 this.t進行描画_パネル文字列();
@@ -728,7 +731,7 @@ internal class CStage演奏画面共通 : CStage
     public CActChipEffects actChipEffects;
     public CActRunner actRunner;
     public CActMob actMob;
-    public CActHitResult actHitResult;
+    public CAct演奏DrumsチップファイアD actChipFireD;
     public CAct演奏Drumsレーン actLane;
     public CActMtaiko actMtaiko;
     public CAct演奏Drumsレーン太鼓 actLaneTaiko;
@@ -1493,8 +1496,9 @@ internal class CStage演奏画面共通 : CStage
         {
             if (eJudgeResult != EJudge.AutoPerfect && eJudgeResult != EJudge.Miss)
             {
-                this.actHitResult.Start(0x11, EJudge.Bad, pChip.nLag, nPlayer);
+                this.actJudgeString.Start(EJudge.Bad, pChip.nLag, pChip, nPlayer);
                 actLaneTaiko.Start(0x11, eJudgeResult, true, nPlayer);
+                actChipFireD.Start(0x11, eJudgeResult, nPlayer);
             }
         }
         else
@@ -1506,8 +1510,9 @@ internal class CStage演奏画面共通 : CStage
 
             if (eJudgeResult != EJudge.AutoPerfect && eJudgeResult != EJudge.Miss)
             {
-                this.actHitResult.Start(pChip.nチャンネル番号, bAutoPlay ? EJudge.AutoPerfect : eJudgeResult, pChip.nLag, nPlayer);
+                this.actJudgeString.Start(bAutoPlay ? EJudge.AutoPerfect : eJudgeResult, pChip.nLag, pChip, nPlayer);
                 actLaneTaiko.Start(pChip.nチャンネル番号, eJudgeResult, true, nPlayer);
+                actChipFireD.Start(pChip.nチャンネル番号, eJudgeResult, nPlayer);
             }
             else if (eJudgeResult != EJudge.Bad)
             {
@@ -2245,7 +2250,6 @@ internal class CStage演奏画面共通 : CStage
         if ((e判定 != EJudge.Bad) && (e判定 != EJudge.Miss))
         {
             actLaneTaiko.Start(pChip.nチャンネル番号, e判定, b両手入力, nPlayer);
-            this.actHitResult.Start(pChip.nチャンネル番号, e判定, pChip.nLag, nPlayer);
 
             int nFly = 0;
             switch (pChip.nチャンネル番号)
