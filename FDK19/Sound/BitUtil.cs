@@ -28,13 +28,14 @@ namespace FDK
         /// </summary>
         public static SDL_AudioFormat GetSDLAudioFormat(WaveStream waveStream)
         {
+            // ppy.SDL3-CS では SDL_AUDIO_ プレフィックスを除いた名前が使用されます
             return waveStream.WaveFormat.BitsPerSample switch
             {
-                8 => SDL_AudioFormat.SDL_AUDIO_S8,
-                16 => SDL_AudioFormat.SDL_AUDIO_S16,
-                24 => SDL_AudioFormat.SDL_AUDIO_S32, // 24bitは32bitとして扱うか変換が必要
-                32 => waveStream.WaveFormat is WaveFormatExtraData ? SDL_AudioFormat.SDL_AUDIO_F32 : SDL_AudioFormat.SDL_AUDIO_S32,
-                _ => SDL_AudioFormat.SDL_AUDIO_S16,
+                8 => SDL_AudioFormat.S8,
+                16 => SDL_AudioFormat.S16,
+                24 => SDL_AudioFormat.S32, // 24bitは32bitとして扱うか、別途変換が必要
+                32 => (waveStream.WaveFormat.Encoding == WaveFormatEncoding.IeeeFloat) ? SDL_AudioFormat.F32 : SDL_AudioFormat.S32,
+                _ => SDL_AudioFormat.S16,
             };
         }
 
@@ -55,8 +56,8 @@ namespace FDK
                 for (int i = 0; i < count; i++)
                 {
                     // 24bitのリトルエンディアンデータ(L, M, H)から上位16bit(M, H)を抽出
-                    // src[i*3] は下位8bitなので捨て、i*3+1 と i*3+2 を使用
-                    dst[i] = (short)((src[i * 3 + 1]) | (src[i * 3 + 2] << 8));
+                    // src[i*3] は最下位バイト(L)なので捨て、i*3+1 と i*3+2 を結合
+                    dst[i] = (short)(src[i * 3 + 1] | (src[i * 3 + 2] << 8));
                 }
             }
             return newB;
