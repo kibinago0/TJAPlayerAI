@@ -14,7 +14,7 @@
 /// double値を使う場合、t進行db、t進行LoopDbを使うこと。
 /// また、double版では間隔の値はミリ秒単位ではなく、通常の秒単位になります。
 /// </remarks>
-public class CCounter
+public struct CCounter
 {
     // 値プロパティ
 
@@ -185,7 +185,7 @@ public class CCounter
     /// 前回の t進行() の呼び出しからの経過時間をもとに、必要なだけカウント値を増加させる。
     /// カウント値が終了値に達している場合は、それ以上増加しない（終了値を維持する）。
     /// </summary>
-    public void t進行()
+    public void t進行(ref CCounter ct) { ... }
     {
         if ((this.timer is not null) && (this.n現在の経過時間ms != CTimer.nUnused))
         {
