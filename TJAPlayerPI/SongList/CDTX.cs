@@ -837,6 +837,9 @@ internal class CDTX : CActivity
         }
         #endregion
 
+        int totalAdjust = nBGMAdjust + TJAPlayerPI.app.ConfigToml.PlayOption.GlobalOffsetMs;
+        this.t各自動再生音チップの再生時刻を変更する(totalAdjust);
+
         #region [ 拍子_拍線の挿入 ]
         if (this.listChip.Count > 0)
         {
@@ -4191,7 +4194,7 @@ internal class CDTX : CActivity
                     
                 // 譜面のOFFSET(秒)をミリ秒に変換し、グローバルオフセット(ms)を足す
                 // 全体を (int) で囲って確実に整数にします
-                this.nOFFSET = (int)Math.Round(offset * 1000.0) + TJAPlayerPI.app.ConfigToml.PlayOption.GlobalOffsetMs;
+                this.nOFFSET = (int)Math.Round(offset * 1000.0);
             }
         }
         else

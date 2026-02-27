@@ -473,11 +473,11 @@ public class CConfigToml
         public int AutoRollSpeed { get; set; } = 67;
         public int TrainingSkipMeasures { get; set; } = 5;
         public int TrainingJumpInterval { get; set; } = 750;
-        public int _GlobalOffsetMs = 0;
+        private int _GlobalOffsetMs = 0;
         public int GlobalOffsetMs
         {
-            get { return _GlobalOffsetMs; }
-            set { _GlobalOffsetMs = Math.Clamp(value, -1000, 1000); }
+            get => _GlobalOffsetMs;
+            set => _GlobalOffsetMs = Math.Clamp(value, -1000, 1000);
         }
     }
 

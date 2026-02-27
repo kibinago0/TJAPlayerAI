@@ -484,12 +484,8 @@ internal class CActConfigList : CActivity
         #endregion
 
         this.iGlobalOffsetMs = new CItemInteger("Global Offset", -1000, 1000, TJAPlayerPI.app.ConfigToml.PlayOption.GlobalOffsetMs,
-            "譜面全体のズレを補正します。\n" +
-            "-1000～1000ms を指定可能です。\n" +
-            "正の数で遅らせ、負の数で早めます。",
-            "Global offset for all charts.\n" +
-            "You can set from -1000 to 1000ms.\n" +
-            "Positive values delay, negative values advance.");
+            "譜面全体のズレを補正します。\n正の数で遅らせ、負の数で早めます。",
+            "Global offset for all charts.\nPositive values delay, negative values advance.");
         this.list項目リスト.Add(this.iGlobalOffsetMs);
 
         this.iDrumsScrollSpeed1P = new CItemInteger("1P ScrollSpeed", 1, 2000, TJAPlayerPI.app.ConfigToml.PlayOption.ScrollSpeed[0],
