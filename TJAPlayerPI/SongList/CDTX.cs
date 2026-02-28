@@ -1,4 +1,4 @@
-﻿using FDK;
+using FDK;
 
 namespace TJAPlayerPI;
 
@@ -4826,21 +4826,6 @@ internal class CDTX : CActivity
                     break;
             }
         }
-    }
-
-    private void tParseLine(string line)
-    {
-        ReadOnlySpan<char> span = line.AsSpan().Trim();
-        
-        if (span.IsEmpty || span[0] == ';') return;
-    
-        if (span.StartsWith("#BPM", StringComparison.OrdinalIgnoreCase))
-        {
-            // Substringを使わずにSliceを使用
-            var bpmSpan = span.Slice(4).Trim();
-            if (double.TryParse(bpmSpan, out double dbBPM)) { ... }
-        }
-        // ... 他の命令も同様にSliceで処理 ...
     }
 
     /// <summary>
