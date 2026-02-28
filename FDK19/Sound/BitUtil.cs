@@ -1,43 +1,68 @@
-﻿using System;
-using System.Runtime.InteropServices;
-using NAudio.Wave;
-using Silk.NET.OpenAL;
+﻿using NAudio.Wave;
 using SDL;
+using Silk.NET.OpenAL;
+using Silk.NET.OpenAL.Extensions.EXT;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 
-namespace FDK
+namespace FDK.Sound
 {
     public static class BitUtil
     {
         public static BufferFormat GetBufferFormat(WaveStream waveStream)
         {
-            if (waveStream.WaveFormat.Channels == 1)
-                return waveStream.WaveFormat.BitsPerSample == 8 ? BufferFormat.Mono8 : BufferFormat.Mono16;
-            return waveStream.WaveFormat.BitsPerSample == 8 ? BufferFormat.Stereo8 : BufferFormat.Stereo16;
+            switch (waveStream.WaveFormat.BitsPerSample)
+            {
+                case 8:
+                    return waveStream.WaveFormat.Channels == 1 ? BufferFormat.Mono8 : BufferFormat.Stereo8;
+                case 16:
+                    return waveStream.WaveFormat.Channels == 1 ? BufferFormat.Mono16 : BufferFormat.Stereo16;
+                case 24:
+                    return waveStream.WaveFormat.Channels == 1 ? BufferFormat.Mono16 : BufferFormat.Stereo16;
+                case 32:
+                    return waveStream.WaveFormat.Channels == 1 ? (BufferFormat)FloatBufferFormat.Mono : (BufferFormat)FloatBufferFormat.Stereo;
+            }
+            return BufferFormat.Mono8;
         }
-
         public static SDL_AudioFormat GetSDLAudioFormat(WaveStream waveStream)
         {
-            return waveStream.WaveFormat.BitsPerSample switch
+            switch (waveStream.WaveFormat.BitsPerSample)
             {
-                8 => (SDL_AudioFormat)0x0008,  // AUDIO_S8
-                16 => (SDL_AudioFormat)0x8010, // AUDIO_S16LE
-                24 => (SDL_AudioFormat)0x8020, // AUDIO_S32LE
-                32 => (waveStream.WaveFormat.Encoding == WaveFormatEncoding.IeeeFloat) ? (SDL_AudioFormat)0x8120 : (SDL_AudioFormat)0x8020,
-                _ => (SDL_AudioFormat)0x8010,
-            };
+                case 8:
+                    return SDL_AudioFormat.SDL_AUDIO_S8;
+                case 16:
+                    return SDL_AudioFormat.SDL_AUDIO_S16LE;
+                case 24:
+                    return SDL_AudioFormat.SDL_AUDIO_S16LE;
+                case 32:
+                    return SDL_AudioFormat.SDL_AUDIO_F32LE;
+            }
+            return SDL_AudioFormat.SDL_AUDIO_S8;
         }
 
-        public static unsafe byte[] Bit24ToBit16(byte[] bytes)
+        public static byte[] Bit24ToBit16(byte[] bytes)
         {
-            int count = bytes.Length / 3;
-            byte[] newB = new byte[count * 2];
-            fixed (byte* pSrc = bytes, pDst = newB) {
-                byte* src = pSrc;
-                short* dst = (short*)pDst;
-                for (int i = 0; i < count; i++)
-                    dst[i] = (short)(src[i * 3 + 1] | (src[i * 3 + 2] << 8));
+            int baseLength = bytes.Length / 3;
+            byte[] newBytes = new byte[baseLength * 2];
+
+            for (int i = 0; i < baseLength; i++)
+            {
+                int shift24 = i * 3;
+                int shift16 = i * 2;
+                byte[] byteArray = new byte[3] { bytes[shift24 + 0], bytes[shift24 + 1], bytes[shift24 + 2] };
+
+                int og = byteArray[0] | (byteArray[1] << 8) | (byteArray[2] << 16);
+                short val = (short)(og / 256);
+
+                byte[] newB = BitConverter.GetBytes(val);
+                newBytes[shift16 + 0] = newB[0];
+                newBytes[shift16 + 1] = newB[1];
             }
-            return newB;
+
+            return newBytes;
         }
     }
 }

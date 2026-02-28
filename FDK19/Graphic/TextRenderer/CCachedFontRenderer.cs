@@ -1,151 +1,248 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Drawing;
-using System.Diagnostics;
-using SkiaSharp;
+﻿using SkiaSharp;
 
-namespace FDK
+namespace FDK;
+
+/// <summary>
+/// 高速描画版のCFontRendererクラス。
+/// といっても、一度レンダリングした結果をキャッシュして使いまわしているだけ。
+/// </summary>
+public class CCachedFontRenderer : CFontRenderer
 {
-    /// <summary>
-    /// 高速描画版のCFontRendererクラス。
-    /// レンダリング結果をハッシュマップで管理し、O(1)での高速検索を実現します。
-    /// </summary>
-    public class CCachedFontRenderer : CFontRenderer
+    #region [ コンストラクタ ]
+    public CCachedFontRenderer(string fontpath, int pt)
+        : this(fontpath, pt, CFontRenderer.FontStyle.Regular)
     {
-        // キャッシュキー用の構造体（検索時のアロケーションをゼロにするため）
-        private struct FontCacheKey : IEquatable<FontCacheKey>
-        {
-            public string drawstr;
-            public DrawMode drawmode;
-            public Color fontColor;
-            public Color edgeColor;
-            public Color gradationTopColor;
-            public Color gradationBottomColor;
-            public int edge_Ratio;
-            public bool vertical;
+    }
+    public CCachedFontRenderer(string fontpath, int pt, CFontRenderer.FontStyle style)
+        : base(fontpath, pt, style)
+    {
+        this.bDisposed_CCachedFontRenderer = false;
+        this.listFontCache = new List<FontCache>();
+    }
+    #endregion
 
-            public bool Equals(FontCacheKey other)
+
+    #region [ DrawTextのオーバーロード群 ]
+    /// <summary>
+    /// 文字列を描画したテクスチャを返す
+    /// </summary>
+    /// <param name="drawstr">描画文字列</param>
+    /// <param name="fontColor">描画色</param>
+    /// <returns>描画済テクスチャ</returns>
+    public new SKBitmap DrawText(string drawstr, Color fontColor)
+    {
+        return DrawText(drawstr, DrawMode.Normal, fontColor, Color.White, Color.White, Color.White, 0);
+    }
+
+    /// <summary>
+    /// 文字列を描画したテクスチャを返す
+    /// </summary>
+    /// <param name="drawstr">描画文字列</param>
+    /// <param name="fontColor">描画色</param>
+    /// <param name="edgeColor">縁取色</param>
+    /// <returns>描画済テクスチャ</returns>
+    public new SKBitmap DrawText(string drawstr, Color fontColor, Color edgeColor, int edge_Ratio)
+    {
+        return DrawText(drawstr, DrawMode.Edge, fontColor, edgeColor, Color.White, Color.White, edge_Ratio);
+    }
+
+    /// <summary>
+    /// 文字列を描画したテクスチャを返す
+    /// </summary>
+    /// <param name="drawstr">描画文字列</param>
+    /// <param name="fontColor">描画色</param>
+    /// <param name="edgeColor">縁取色</param>
+    /// <returns>描画済テクスチャ</returns>
+    public SKBitmap DrawText(string drawstr, Color fontColor, Color edgeColor, DrawMode dMode, int edge_Ratio)
+    {
+        return DrawText(drawstr, dMode, fontColor, edgeColor, Color.White, Color.White, edge_Ratio);
+    }
+
+    /// <summary>
+    /// 文字列を描画したテクスチャを返す
+    /// </summary>
+    /// <param name="drawstr">描画文字列</param>
+    /// <param name="fontColor">描画色</param>
+    /// <param name="edgeColor">縁取色</param>
+    /// <param name="gradationTopColor">グラデーション 上側の色</param>
+    /// <param name="gradationBottomColor">グラデーション 下側の色</param>
+    /// <returns>描画済テクスチャ</returns>
+    public new SKBitmap DrawText(string drawstr, Color fontColor, Color edgeColor, Color gradationTopColor, Color gradataionBottomColor, int edge_Ratio)
+    {
+        return DrawText(drawstr, DrawMode.Edge | DrawMode.Gradation, fontColor, edgeColor, gradationTopColor, gradataionBottomColor, edge_Ratio);
+    }
+
+    /// <summary>
+    /// 文字列を描画したテクスチャを返す
+    /// </summary>
+    /// <param name="drawstr">描画文字列</param>
+    /// <param name="fontColor">描画色</param>
+    /// <param name="edgeColor">縁取色</param>
+    /// <param name="gradationTopColor">グラデーション 上側の色</param>
+    /// <param name="gradationBottomColor">グラデーション 下側の色</param>
+    /// <returns>描画済テクスチャ</returns>
+    public new SKBitmap DrawText_V(string drawstr, Color fontColor, Color edgeColor, int edge_Ratio)
+    {
+        return DrawText_V(drawstr, DrawMode.Edge, fontColor, edgeColor, Color.Black, Color.Black, edge_Ratio);
+    }
+
+    #endregion
+
+    protected new SKBitmap DrawText(string drawstr, DrawMode drawmode, Color fontColor, Color edgeColor, Color gradationTopColor, Color gradationBottomColor, int edge_Ratio)
+    {
+        #region [ 以前レンダリングしたことのある文字列/フォントか? (キャッシュにヒットするか?) ]
+        int index = listFontCache.FindIndex(
+            delegate (FontCache fontcache)
             {
-                return drawstr == other.drawstr &&
-                       drawmode == other.drawmode &&
-                       fontColor == other.fontColor &&
-                       edgeColor == other.edgeColor &&
-                       gradationTopColor == other.gradationTopColor &&
-                       gradationBottomColor == other.gradationBottomColor &&
-                       edge_Ratio == other.edge_Ratio &&
-                       vertical == other.vertical;
+                return (
+                    drawstr == fontcache.drawstr &&
+                    drawmode == fontcache.drawmode &&
+                    fontColor == fontcache.fontColor &&
+                    edgeColor == fontcache.edgeColor &&
+                    gradationTopColor == fontcache.gradationTopColor &&
+                    gradationBottomColor == fontcache.gradationBottomColor &&
+                    fontcache.Vertical == false
+                );
             }
-
-            public override bool Equals(object obj) => obj is FontCacheKey other && Equals(other);
-
-            public override int GetHashCode()
+        );
+        #endregion
+        if (index < 0)
+        {
+            // キャッシュにヒットせず。
+            #region [ レンダリングして、キャッシュに登録 ]
+            FontCache fc = new FontCache();
+            fc.bmp = base.DrawText(drawstr, drawmode, fontColor, edgeColor, gradationTopColor, gradationBottomColor, edge_Ratio);
+            fc.drawstr = drawstr;
+            fc.drawmode = drawmode;
+            fc.fontColor = fontColor;
+            fc.edgeColor = edgeColor;
+            fc.gradationTopColor = gradationTopColor;
+            fc.gradationBottomColor = gradationBottomColor;
+            fc.Vertical = false;
+            listFontCache.Add(fc);
+            Debug.WriteLine(drawstr + ": Cacheにヒットせず。(cachesize=" + listFontCache.Count + ")");
+            #endregion
+            #region [ もしキャッシュがあふれたら、最も古いキャッシュを破棄する ]
+            if (listFontCache.Count > MAXCACHESIZE)
             {
-                var hash = new HashCode();
-                hash.Add(drawstr);
-                hash.Add(drawmode);
-                hash.Add(fontColor);
-                hash.Add(edgeColor);
-                hash.Add(gradationTopColor);
-                hash.Add(gradationBottomColor);
-                hash.Add(edge_Ratio);
-                hash.Add(vertical);
-                return hash.ToHashCode();
+                Debug.WriteLine("Cache溢れ。" + listFontCache[0].drawstr + " を解放します。");
+                if (listFontCache[0].bmp is not null)
+                {
+                    listFontCache[0].bmp.Dispose();
+                }
+                listFontCache.RemoveAt(0);
             }
+            #endregion
+
+            // 呼び出し元のDispose()でキャッシュもDispose()されないように、Copy()で返す。
+            return listFontCache[listFontCache.Count - 1].bmp.Copy();
         }
-
-        private class FontCache
+        else
         {
-            public SKBitmap bmp;
-            public long lastUsedTick; // LRU管理用
+            Debug.WriteLine(drawstr + ": Cacheにヒット!! index=" + index);
+            #region [ キャッシュにヒット。レンダリングは行わず、キャッシュ内のデータを返して終了。]
+            // 呼び出し元のDispose()でキャッシュもDispose()されないように、Copy()で返す。
+            return listFontCache[index].bmp.Copy();
+            #endregion
         }
+    }
 
-        private Dictionary<FontCacheKey, FontCache> _cache = new Dictionary<FontCacheKey, FontCache>();
-        private int nCacheSize = 64; // キャッシュする最大数
-
-        public CCachedFontRenderer(string fontpath, int pt, FontStyle style = FontStyle.Regular) 
-            : base(fontpath, pt, style)
-        {
-        }
-
-        // --- オーバーロード群 ---
-
-        public new SKBitmap DrawText(string drawstr, Color fontColor)
-            => DrawTextInternal(drawstr, DrawMode.Normal, fontColor, Color.White, Color.White, Color.White, 0, false);
-
-        public new SKBitmap DrawText(string drawstr, Color fontColor, Color edgeColor, int edge_Ratio)
-            => DrawTextInternal(drawstr, DrawMode.Edge, fontColor, edgeColor, Color.White, Color.White, edge_Ratio, false);
-
-        public new SKBitmap DrawText(string drawstr, Color fontColor, Color edgeColor, Color gradationTopColor, Color gradationBottomColor, int edge_Ratio)
-            => DrawTextInternal(drawstr, DrawMode.Edge | DrawMode.Gradation, fontColor, edgeColor, gradationTopColor, gradationBottomColor, edge_Ratio, false);
-
-        public new SKBitmap DrawText_V(string drawstr, Color fontColor, Color edgeColor, int edge_Ratio)
-            => DrawTextInternal(drawstr, DrawMode.Edge, fontColor, edgeColor, Color.White, Color.White, edge_Ratio, true);
-
-        // --- コアロジック ---
-
-        private SKBitmap DrawTextInternal(string drawstr, DrawMode drawmode, Color fontColor, Color edgeColor, Color gradationTopColor, Color gradationBottomColor, int edge_Ratio, bool vertical)
-        {
-            if (string.IsNullOrEmpty(drawstr)) return new SKBitmap(1, 1);
-
-            var key = new FontCacheKey
+    protected new SKBitmap DrawText_V(string drawstr, DrawMode drawmode, Color fontColor, Color edgeColor, Color gradationTopColor, Color gradationBottomColor, int edge_Ratio)
+    {
+        #region [ 以前レンダリングしたことのある文字列/フォントか? (キャッシュにヒットするか?) ]
+        int index = listFontCache.FindIndex(
+            delegate (FontCache fontcache)
             {
+                return (
+                    drawstr == fontcache.drawstr &&
+                    drawmode == fontcache.drawmode &&
+                    fontColor == fontcache.fontColor &&
+                    edgeColor == fontcache.edgeColor &&
+                    gradationTopColor == fontcache.gradationTopColor &&
+                    gradationBottomColor == fontcache.gradationBottomColor &&
+                    fontcache.Vertical == true
+                );
+            }
+        );
+        #endregion
+        if (index < 0)
+        {
+            // キャッシュにヒットせず。
+            #region [ レンダリングして、キャッシュに登録 ]
+            FontCache fc = new FontCache()
+            {
+                bmp = base.DrawText_V(drawstr, drawmode, fontColor, edgeColor, gradationTopColor, gradationBottomColor, edge_Ratio),
                 drawstr = drawstr,
-                drawmode = drawmode,
                 fontColor = fontColor,
                 edgeColor = edgeColor,
                 gradationTopColor = gradationTopColor,
                 gradationBottomColor = gradationBottomColor,
-                edge_Ratio = edge_Ratio,
-                vertical = vertical
+                Vertical = true,
             };
-
-            // 1. Dictionaryによる高速検索 (O(1))
-            if (_cache.TryGetValue(key, out var cached))
+            listFontCache.Add(fc);
+            Debug.WriteLine(drawstr + ": Cacheにヒットせず。(cachesize=" + listFontCache.Count + ")");
+            #endregion
+            #region [ もしキャッシュがあふれたら、最も古いキャッシュを破棄する ]
+            if (listFontCache.Count > MAXCACHESIZE)
             {
-                cached.lastUsedTick = DateTime.Now.Ticks;
-                // 既存の呼び出し側がDisposeすることを想定し、Copyを返す
-                return cached.bmp.Copy();
+                Debug.WriteLine("Cache溢れ。" + listFontCache[0].drawstr + " を解放します。");
+                listFontCache[0].bmp?.Dispose();
+                listFontCache.RemoveAt(0);
             }
+            #endregion
 
-            // 2. キャッシュミス時の生成
-            SKBitmap bmp = vertical 
-                ? base.DrawText_V(drawstr, drawmode, fontColor, edgeColor, gradationTopColor, gradationBottomColor, edge_Ratio)
-                : base.DrawText(drawstr, drawmode, fontColor, edgeColor, gradationTopColor, gradationBottomColor, edge_Ratio);
-
-            // 3. キャッシュ容量の管理 (LRU: 最も古く使われたものを削除)
-            if (_cache.Count >= nCacheSize)
-            {
-                FontCacheKey oldestKey = default;
-                long oldestTick = long.MaxValue;
-                foreach (var kvp in _cache)
-                {
-                    if (kvp.Value.lastUsedTick < oldestTick)
-                    {
-                        oldestTick = kvp.Value.lastUsedTick;
-                        oldestKey = kvp.Key;
-                    }
-                }
-                if (oldestTick != long.MaxValue)
-                {
-                    _cache[oldestKey].bmp.Dispose();
-                    _cache.Remove(oldestKey);
-                }
-            }
-
-            var newEntry = new FontCache { bmp = bmp, lastUsedTick = DateTime.Now.Ticks };
-            _cache[key] = newEntry;
-
-            return bmp.Copy();
+            // 呼び出し元のDispose()でキャッシュもDispose()されないように、Copy()で返す。
+            return listFontCache[listFontCache.Count - 1].bmp.Copy();
         }
-
-        public new void Dispose()
+        else
         {
-            foreach (var item in _cache.Values)
-            {
-                item.bmp?.Dispose();
-            }
-            _cache.Clear();
-            base.Dispose();
+            Debug.WriteLine(drawstr + ": Cacheにヒット!! index=" + index);
+            #region [ キャッシュにヒット。レンダリングは行わず、キャッシュ内のデータを返して終了。]
+            // 呼び出し元のDispose()でキャッシュもDispose()されないように、Copy()で返す。
+            return listFontCache[index].bmp.Copy();
+            #endregion
         }
     }
+
+    #region [ IDisposable 実装 ]
+    //-----------------
+    public new void Dispose()
+    {
+        if (!this.bDisposed_CCachedFontRenderer)
+        {
+            foreach (FontCache bc in listFontCache)
+                bc.bmp?.Dispose();
+
+            listFontCache.Clear();
+            this.bDisposed_CCachedFontRenderer = true;
+        }
+        base.Dispose();
+    }
+    //-----------------
+    #endregion
+
+    #region [ private ]
+    //-----------------
+    /// <summary>
+    /// キャッシュ容量
+    /// </summary>
+    private const int MAXCACHESIZE = 256;
+
+    private struct FontCache
+    {
+        // public Font font;
+        public string drawstr;
+        public DrawMode drawmode;
+        public Color fontColor;
+        public Color edgeColor;
+        public Color gradationTopColor;
+        public Color gradationBottomColor;
+        public SKBitmap bmp;
+        public bool Vertical;
+    }
+    private List<FontCache> listFontCache;
+
+    protected bool bDisposed_CCachedFontRenderer;
+    //-----------------
+    #endregion
 }
