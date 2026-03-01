@@ -11,7 +11,7 @@ using static TJAPlayerPI.Cスコア;
 
 namespace TJAPlayerPI;
 
-public class TJAPlayerPI : Game
+public partial class TJAPlayerPI : Game
 {
     // プロパティ
     #region [ properties ]

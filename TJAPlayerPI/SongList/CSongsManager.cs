@@ -3,7 +3,7 @@
 namespace TJAPlayerPI;
 
 [Serializable]
-internal class CSongsManager
+internal partial class CSongsManager
 {
     // プロパティ
 

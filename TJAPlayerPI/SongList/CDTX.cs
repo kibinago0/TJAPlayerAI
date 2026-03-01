@@ -2,7 +2,7 @@ using FDK;
 
 namespace TJAPlayerPI;
 
-internal class CDTX : CActivity
+internal partial class CDTX : CActivity
 {
     // 定数
 

@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace TJAPlayerPI
 {
-    internal partial class TJAPlayerPI
+    public partial class TJAPlayerPI
     {
         // 爆速化ポイント1: WAV読み込みの並列化
         // 元のコードでは1フレームに1〜3個ずつ読み込んでいたが、
