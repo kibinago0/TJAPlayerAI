@@ -10,7 +10,7 @@ namespace TJAPlayerPI;
 //_ゴーゴータイムモーション
 //_クリア時モーション
 //
-internal class CActChara : CActivity
+internal partial class CActChara : CActivity
 {
     public CActChara(CStage演奏画面共通 stage演奏ドラム画面, CAct演奏ゲージ共通 actGauge)
     {

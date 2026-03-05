@@ -10,7 +10,7 @@ namespace TJAPlayerPI;
 /// <summary>
 /// 演奏画面のクラス
 /// </summary>
-internal class CStage演奏画面共通 : CStage
+internal partial class CStage演奏画面共通 : CStage
 {
     // プロパティ
 
