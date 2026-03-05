@@ -45,13 +45,14 @@ namespace TJAPlayerPI
                 }
             }
 
-            // 2. Balloon_Broke (333.33ms固定)
+            // 2. Balloon_Broke (再生速度: 1小節 / 表示時間: 333.33ms固定)
             if (CharaAction_Balloon_Broke[nPlayer]?.b進行中 == true)
             {
                 CharaAction_Balloon_Broke[nPlayer].t進行();
                 
-                const double TargetTimeMs = 333.33;
-                if (CharaAction_Balloon_Broke[nPlayer].n現在の値 >= TargetTimeMs)
+                const double DisplayDurationMs = 333.33;
+
+                if (CharaAction_Balloon_Broke[nPlayer].n現在の値 >= DisplayDurationMs)
                 {
                     CharaAction_Balloon_Broke[nPlayer].t停止();
                 }
@@ -60,10 +61,13 @@ namespace TJAPlayerPI
                     int ptn = TJAPlayerPI.app.Skin.Game_Chara_Ptn_Balloon_Broke[nPlayer];
                     if (ptn > 0)
                     {
+                        double bpm = stage演奏ドラム画面.actPlayInfo.dbBPM[nPlayer];
+                        double measureTimeMs = (60000.0 / bpm) * 4.0;
                         long elapsed = CharaAction_Balloon_Broke[nPlayer].n現在の値;
-                        // アニメーション速度はSkinConfigに従うが、333.33msで打ち切る
-                        // 速い場合は最後のフレームで待機
-                        int frame = (int)(elapsed / (double)TJAPlayerPI.app.Skin.SkinConfig.Game.Chara.BalloonTimer[nPlayer]);
+
+                        // 再生速度を1小節に同期
+                        int frame = (int)(elapsed * ptn / measureTimeMs);
+                        // 1小節より速い場合は最後のフレームで待機、遅い場合は途中で消える
                         frame = Math.Min(frame, ptn - 1);
                         
                         TJAPlayerPI.app.Tx.Chara_Balloon_Broke[nPlayer][frame]?.t2D描画(
@@ -75,13 +79,14 @@ namespace TJAPlayerPI
                 }
             }
 
-            // 3. Balloon_Miss (333.33ms固定)
+            // 3. Balloon_Miss (再生速度: 1小節 / 表示時間: 333.33ms固定)
             if (CharaAction_Balloon_Miss[nPlayer]?.b進行中 == true)
             {
                 CharaAction_Balloon_Miss[nPlayer].t進行();
                 
-                const double TargetTimeMs = 333.33;
-                if (CharaAction_Balloon_Miss[nPlayer].n現在の値 >= TargetTimeMs)
+                const double DisplayDurationMs = 333.33;
+
+                if (CharaAction_Balloon_Miss[nPlayer].n現在の値 >= DisplayDurationMs)
                 {
                     CharaAction_Balloon_Miss[nPlayer].t停止();
                 }
@@ -90,8 +95,13 @@ namespace TJAPlayerPI
                     int ptn = TJAPlayerPI.app.Skin.Game_Chara_Ptn_Balloon_Miss[nPlayer];
                     if (ptn > 0)
                     {
+                        double bpm = stage演奏ドラム画面.actPlayInfo.dbBPM[nPlayer];
+                        double measureTimeMs = (60000.0 / bpm) * 4.0;
                         long elapsed = CharaAction_Balloon_Miss[nPlayer].n現在の値;
-                        int frame = (int)(elapsed / (double)TJAPlayerPI.app.Skin.SkinConfig.Game.Chara.BalloonTimer[nPlayer]);
+
+                        // 再生速度を1小節に同期
+                        int frame = (int)(elapsed * ptn / measureTimeMs);
+                        // 1小節より速い場合は最後のフレームで待機、遅い場合は途中で消える
                         frame = Math.Min(frame, ptn - 1);
                         
                         TJAPlayerPI.app.Tx.Chara_Balloon_Miss[nPlayer][frame]?.t2D描画(
