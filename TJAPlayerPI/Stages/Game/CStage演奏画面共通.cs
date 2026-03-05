@@ -1305,7 +1305,7 @@ internal partial class CStage演奏画面共通 : CStage
             {
                 actChara.アクションタイマーリセット(nPlayer);
                 actChara.bマイどんアクション中[nPlayer] = true;
-                actChara.CharaAction_Balloon_Breaking[nPlayer] = new CCounter(0, TJAPlayerPI.app.Skin.Game_Chara_Ptn_Balloon_Breaking[nPlayer] - 1, TJAPlayerPI.app.Skin.SkinConfig.Game.Chara.BalloonTimer[nPlayer], TJAPlayerPI.app.Timer);
+                actChara.CharaAction_Balloon_Breaking[nPlayer] = new CCounter(0, 1000000, 1, TJAPlayerPI.app.Timer);
 
             }
             if (this.actBalloon.ct風船アニメ[nPlayer].b終了値に達してない)
@@ -1360,7 +1360,7 @@ internal partial class CStage演奏画面共通 : CStage
                 {
                     actChara.アクションタイマーリセット(nPlayer);
                     actChara.bマイどんアクション中[nPlayer] = true;
-                    actChara.CharaAction_Balloon_Broke[nPlayer] = new CCounter(0, TJAPlayerPI.app.Skin.Game_Chara_Ptn_Balloon_Broke[nPlayer] - 1, TJAPlayerPI.app.Skin.SkinConfig.Game.Chara.BalloonTimer[nPlayer], TJAPlayerPI.app.Timer);
+                    actChara.CharaAction_Balloon_Broke[nPlayer] = new CCounter(0, 1000, 1, TJAPlayerPI.app.Timer);
                     if (actChara.CharaAction_Balloon_Delay[nPlayer] is not null) actChara.CharaAction_Balloon_Delay[nPlayer] = new CCounter(0, TJAPlayerPI.app.Skin.SkinConfig.Game.Chara.BalloonDelay[nPlayer] - 1, 1, TJAPlayerPI.app.Timer);
                 }
             }
@@ -3105,7 +3105,7 @@ internal partial class CStage演奏画面共通 : CStage
                                     {
                                         actChara.アクションタイマーリセット(nPlayer);
                                         actChara.bマイどんアクション中[nPlayer] = true;
-                                        actChara.CharaAction_Balloon_Miss[nPlayer] = new CCounter(0, TJAPlayerPI.app.Skin.Game_Chara_Ptn_Balloon_Miss[nPlayer] - 1, TJAPlayerPI.app.Skin.SkinConfig.Game.Chara.BalloonTimer[nPlayer], TJAPlayerPI.app.Timer);
+                                        actChara.CharaAction_Balloon_Miss[nPlayer] = new CCounter(0, 1000, 1, TJAPlayerPI.app.Timer);
                                         if (actChara.CharaAction_Balloon_Delay[nPlayer] is not null) actChara.CharaAction_Balloon_Delay[nPlayer] = new CCounter(0, TJAPlayerPI.app.Skin.SkinConfig.Game.Chara.BalloonDelay[nPlayer] - 1, 1, TJAPlayerPI.app.Timer);
                                     }
                                 }
