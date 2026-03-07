@@ -1301,7 +1301,7 @@ internal partial class CStage演奏画面共通 : CStage
             }
 
             this.b連打中[nPlayer] = true;
-            if (actChara.CharaAction_Balloon_Breaking[nPlayer] is not null)
+            if (actChara.CharaAction_Balloon_Breaking[nPlayer] is not null && !actChara.CharaAction_Balloon_Breaking[nPlayer].b進行中)
             {
                 actChara.アクションタイマーリセット(nPlayer);
                 actChara.bマイどんアクション中[nPlayer] = true;

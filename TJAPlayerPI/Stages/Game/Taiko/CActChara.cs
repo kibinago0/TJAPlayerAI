@@ -283,7 +283,7 @@ internal partial class CActChara : CActivity
                         int ptn = TJAPlayerPI.app.Skin.Game_Chara_Ptn_Balloon_Broke[nPlayer];
                         double bpm = stage演奏ドラム画面.actPlayInfo.dbBPM[nPlayer];
                         double measureTimeMs = (60000.0 / bpm) * 4.0;
-                        int frame = (int)(elapsed * ptn / measureTimeMs);
+                        int frame = (int)(elapsed * ptn / DisplayDurationMs);
                         frame = Math.Min(frame, ptn - 1);
 
                         if (TJAPlayerPI.app.Tx.Chara_Balloon_Broke[nPlayer][frame] is not null)
@@ -312,7 +312,7 @@ internal partial class CActChara : CActivity
                         int ptn = TJAPlayerPI.app.Skin.Game_Chara_Ptn_Balloon_Miss[nPlayer];
                         double bpm = stage演奏ドラム画面.actPlayInfo.dbBPM[nPlayer];
                         double measureTimeMs = (60000.0 / bpm) * 4.0;
-                        int frame = (int)(elapsed * ptn / measureTimeMs);
+                        int frame = (int)(elapsed * ptn / DisplayDurationMs);
                         frame = Math.Min(frame, ptn - 1);
 
                         if (TJAPlayerPI.app.Tx.Chara_Balloon_Miss[nPlayer][frame] is not null)
@@ -359,10 +359,12 @@ internal partial class CActChara : CActivity
         CharaAction_Balloon_Broke[nPlayer]?.t停止();
         CharaAction_Balloon_Miss[nPlayer]?.t停止();
         CharaAction_Balloon_Delay[nPlayer]?.t停止();
+        CharaAction_Balloon_FadeOut[nPlayer]?.t停止();
         
         if (CharaAction_Balloon_Breaking[nPlayer] is not null) CharaAction_Balloon_Breaking[nPlayer].n現在の値 = 0;
         if (CharaAction_Balloon_Broke[nPlayer] is not null) CharaAction_Balloon_Broke[nPlayer].n現在の値 = 0;
         if (CharaAction_Balloon_Miss[nPlayer] is not null) CharaAction_Balloon_Miss[nPlayer].n現在の値 = 0;
+        if (CharaAction_Balloon_FadeOut[nPlayer] is not null) CharaAction_Balloon_FadeOut[nPlayer].n現在の値 = 0;
         if (CharaAction_Balloon_Delay[nPlayer] is not null) CharaAction_Balloon_Delay[nPlayer].n現在の値 = CharaAction_Balloon_Delay[nPlayer].n終了値;
     }
     private CStage演奏画面共通 stage演奏ドラム画面;
